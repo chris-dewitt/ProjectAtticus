@@ -1,3 +1,6 @@
+# Local config (copy from atticus.example.yaml)
+config/atticus.yaml
+
 # Secrets
 .env
 .env.*

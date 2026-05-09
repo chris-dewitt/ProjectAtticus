@@ -70,17 +70,24 @@ Recommended phased stack:
 9. Atticus should eventually speak aloud by default, but the first milestone is CLI chat.
 10. The persona should be full-character Southern gentleman, but never racist, exclusionary, cruel, or servile.
 
-## First useful command sequence
+## Phase 1 — Windows setup (CLI)
 
-After implementation begins, the expected developer flow should become something like:
+Prerequisites: **Python 3.11+** on Windows, PowerShell, and an OpenAI API key for live replies (tests stay offline).
 
 ```powershell
 cd C:\Users\DELL\Documents\GitHub\ProjectAtticus
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+python -m pip install --upgrade pip
+pip install -e ".[dev]"
 copy .env.example .env
+# Edit .env and set OPENAI_API_KEY=... (never commit .env)
+# Optional local config (otherwise atticus.example.yaml is used with a warning):
+copy config\atticus.example.yaml config\atticus.yaml
+pytest
 python -m atticus
 ```
 
-Do not add real keys to `.env.example`. Keep `.env` ignored by git.
+Slash commands in the CLI: `/help`, `/exit`, `/provider`, `/mode`, `/memory`, `/remember`, `/forget`.
+
+Do not add real keys to `.env.example`. Keep `.env` and `config/atticus.yaml` out of git if they contain secrets or machine-specific paths.
