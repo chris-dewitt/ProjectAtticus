@@ -1,0 +1,52 @@
+---
+description: Memory, local tools, and permission-gated action rules.
+globs: ["atticus/memory/**/*.py", "atticus/tools/**/*.py", "docs/MEMORY.md", "docs/TOOLS.md"]
+alwaysApply: false
+---
+
+# Memory and Tools Rules
+
+Memory defaults:
+
+- Memory is enabled by default.
+- Store summaries and preferences.
+- Do not store raw transcripts by default.
+- Support inspection and forgetting.
+
+Minimum memory schema:
+
+- `preferences`
+- `memory_items`
+- `conversation_summaries`
+- `tool_approvals`
+- `approved_paths`
+
+Tool defaults:
+
+- Tool system may be scaffolded in v0.1 but dangerous tools must not be enabled without permission gates.
+- Every tool has a permission class.
+- Every sensitive action requires approval.
+- Every action should produce audit metadata.
+
+Tools desired eventually:
+
+- read files;
+- search folders;
+- summarize PDFs/docs;
+- write Markdown notes;
+- create project files;
+- run shell commands;
+- open apps;
+- edit code;
+- manage calendar;
+- draft emails;
+- send emails;
+- browse web.
+
+Allowed default folder:
+
+```text
+C:\Users\DELL\Documents\GitHub\ProjectAtticus
+```
+
+Even inside the repo, shell commands and file edits still need confirmation in user-facing operation. Automated tests may write only to test temp directories.

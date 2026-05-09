@@ -1,0 +1,44 @@
+---
+description: Voice, wake word, speech-to-text, and text-to-speech rules for an older Windows laptop.
+globs: ["atticus/voice/**/*.py", "docs/VOICE.md", "*.py"]
+alwaysApply: false
+---
+
+# Voice Rules
+
+The product goal is voice-first and always spoken aloud. The engineering path must still be phased to avoid audio dependency failures.
+
+Voice milestones:
+
+1. CLI text chat.
+2. Text-to-speech response playback.
+3. Push-to-talk speech input.
+4. Wake-word detection for "Atticus," "Hey Atticus," and variants.
+5. Always-listening local wake-word loop.
+
+Target machine: older Dell Inspiron laptop. Optimize for reliability over fancy voice quality.
+
+Recommended approach:
+
+- Start TTS with `pyttsx3` on Windows because it is simple and offline.
+- Add Piper later for better local neural voices if performance is acceptable.
+- Start STT with a small local model or configurable engine.
+- Keep all wake-word detection local.
+- Do not stream ambient audio to cloud providers.
+- Add visible/listening status for privacy.
+- Add keyboard kill switch.
+
+Wake-word variants should be configurable, not hard-coded throughout the codebase.
+
+Example config:
+
+```yaml
+voice:
+  spoken_responses: true
+  wake_phrases:
+    - Atticus
+    - Hey Atticus
+    - Atticus, old son
+  stt_engine: local
+  tts_engine: pyttsx3
+```

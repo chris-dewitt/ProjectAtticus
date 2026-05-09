@@ -1,0 +1,52 @@
+---
+description: Security, privacy, permissions, and secrets rules for ProjectAtticus.
+globs: ["*.py", "*.md", "*.yaml", "*.yml", ".env.example", ".gitignore"]
+alwaysApply: true
+---
+
+# Security and Privacy Rules
+
+Privacy is a non-negotiable product requirement.
+
+Never do these:
+
+- Never commit API keys, OAuth tokens, passwords, secrets, local transcripts, or private file contents.
+- Never log secrets.
+- Never silently send local file contents to OpenAI, Anthropic, Gemini, Google, Microsoft, or any other external service.
+- Never run shell commands without an explicit confirmation flow.
+- Never edit user files without an explicit confirmation flow.
+- Never delete files without a high-friction confirmation flow.
+- Never send emails or calendar invites without explicit final confirmation.
+
+Required permission classes:
+
+- `safe_read`
+- `sensitive_read`
+- `write`
+- `destructive`
+- `external_send`
+- `execute`
+
+The app must summarize what it is about to do before asking for approval.
+
+Example approval copy:
+
+```text
+Atticus would like to read this file and send a summarized excerpt to OpenAI:
+C:\path\to\file.pdf
+Approve? [y/N]
+```
+
+Memory policy:
+
+- Store summaries/preferences, not raw transcripts, by default.
+- Add "forget this" from the beginning.
+- Allow memory inspection.
+- Do not store sensitive personal facts unless Boss explicitly asks.
+
+Secrets policy:
+
+- Use environment variables first.
+- Later, prefer Windows Credential Manager or `keyring` for local secret storage.
+- `.env` must be in `.gitignore`.
+- `.env.example` must contain only placeholders.

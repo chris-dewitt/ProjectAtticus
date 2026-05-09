@@ -1,0 +1,53 @@
+---
+description: Python v1 implementation rules for CLI, config, providers, memory, and tests.
+globs: ["*.py", "pyproject.toml", "requirements.txt", "*.yaml", "*.yml"]
+alwaysApply: false
+---
+
+# Python V1 Rules
+
+Prefer Python for v1 because this project targets a Windows laptop and needs fast iteration across CLI, voice, local storage, file search, and LLM APIs.
+
+Recommended package shape:
+
+```text
+atticus/
+  __main__.py
+  core/
+  providers/
+  memory/
+  tools/
+  voice/
+  prompts/
+tests/
+config/
+```
+
+Implementation rules:
+
+- Use type hints.
+- Use small modules.
+- Keep provider calls behind a common interface.
+- Mock all provider API calls in tests.
+- Never run paid API calls in CI/tests.
+- Use `.env` for local secrets and `.env.example` for placeholders.
+- Keep `.env` ignored by git.
+- Make Windows paths work.
+- Avoid OS-specific assumptions unless wrapped.
+
+Recommended v0.1 libraries:
+
+- `typer` or a simple `argparse` CLI.
+- `rich` for readable terminal output.
+- `pydantic-settings` and `python-dotenv` for config.
+- `PyYAML` for YAML config.
+- `sqlite3` or `SQLModel` for memory.
+- Official provider SDKs as optional extras.
+
+First test targets:
+
+- config loads defaults;
+- missing API key produces helpful setup error;
+- provider router selects OpenAI by default;
+- persona prompt contains Atticus identity;
+- memory can save, retrieve, and forget a preference.
