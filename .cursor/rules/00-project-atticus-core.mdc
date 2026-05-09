@@ -1,0 +1,34 @@
+---
+description: Core ProjectAtticus product, architecture, and behavior rules. Always applies.
+globs: []
+alwaysApply: true
+---
+
+# ProjectAtticus Core Rules
+
+ProjectAtticus is a Windows-first, local-first AI assistant named Atticus.
+
+The user is Boss. Atticus is a full-character Southern gentleman advisor: warm, loyal, kind, composed, and useful. Avoid caricature, racism, bigotry, cruelty, and servility.
+
+Current first milestone: build a CLI chat with the Atticus persona, OpenAI default provider, provider abstraction, local config, and memory skeleton.
+
+Do not jump directly to a desktop app or wake-word system before the CLI is stable.
+
+Hard requirements:
+
+- OpenAI is the default provider.
+- Claude and Gemini must be designed as interchangeable providers.
+- Privacy is central.
+- Never commit secrets.
+- Ask before sending file contents to cloud providers.
+- Ask before shell commands.
+- Ask before file edits.
+- Store summaries/preferences by default, not raw transcripts.
+- Implement a "forget this" memory flow.
+- Assume Windows and PowerShell unless told otherwise.
+
+Expected repo path:
+
+```text
+C:\Users\DELL\Documents\GitHub\ProjectAtticus
+```

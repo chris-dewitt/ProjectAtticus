@@ -1,0 +1,34 @@
+---
+description: LLM provider abstraction and automatic routing rules.
+globs: ["atticus/providers/**/*.py", "atticus/core/router.py", "docs/ARCHITECTURE.md"]
+alwaysApply: false
+---
+
+# Provider Routing Rules
+
+OpenAI is the default provider, but Atticus must support OpenAI, Claude, and Gemini through one common interface.
+
+Do not let app code directly call provider SDKs. All provider-specific logic belongs in `atticus/providers/`.
+
+Provider interface should support:
+
+- text generation;
+- future streaming;
+- future tool-calling abstraction;
+- provider-specific model names in config;
+- graceful missing-key errors;
+- timeouts/retries;
+- usage metadata when available.
+
+Default router behavior in v0.1:
+
+- Use OpenAI unless Boss explicitly requests another provider.
+- Include a `ProviderRouter` class with a simple strategy hook for future automatic routing.
+
+Future router hints:
+
+- General work: OpenAI.
+- Long-form writing/review: Claude candidate.
+- Multimodal/Google ecosystem tasks: Gemini candidate.
+- Always allow manual override.
+- Privacy gate must run before provider call if user files are included.

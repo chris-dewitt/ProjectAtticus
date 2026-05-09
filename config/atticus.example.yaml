@@ -1,0 +1,75 @@
+assistant:
+  name: Atticus
+  user_address: Boss
+  default_mode: default
+  default_provider: openai
+  repo_path: "C:\\Users\\DELL\\Documents\\GitHub\\ProjectAtticus"
+
+providers:
+  routing:
+    automatic: true
+    default_provider: openai
+    allow_manual_override: true
+  openai:
+    enabled: true
+    model: "gpt-5.5"
+    api_key_env: OPENAI_API_KEY
+    timeout_seconds: 60
+  anthropic:
+    enabled: true
+    model: "claude-sonnet-latest"
+    api_key_env: ANTHROPIC_API_KEY
+    timeout_seconds: 60
+  gemini:
+    enabled: true
+    model: "gemini-3-flash-preview"
+    api_key_env: GEMINI_API_KEY
+    timeout_seconds: 60
+
+privacy:
+  memory_enabled: true
+  store_raw_conversations: false
+  store_summaries: true
+  ask_before_sending_files_to_cloud: true
+  ask_before_shell_commands: true
+  ask_before_file_edits: true
+  ask_before_email_send: true
+  ask_before_calendar_write: true
+  audit_tool_calls: true
+
+memory:
+  backend: sqlite
+  sqlite_path: "data/atticus_memory.sqlite3"
+  allow_forget: true
+
+voice:
+  spoken_responses: true
+  tts_engine: pyttsx3
+  stt_engine: local
+  wake_word_engine: local
+  cloud_audio_allowed: false
+  push_to_talk_enabled: true
+  wake_phrases:
+    - Atticus
+    - Hey Atticus
+    - Atticus please
+    - Atticus, old son
+
+tools:
+  enabled: false
+  approved_paths:
+    - "C:\\Users\\DELL\\Documents\\GitHub\\ProjectAtticus"
+  shell:
+    enabled: false
+    require_confirmation: true
+  files:
+    enabled: false
+    require_confirmation_for_edits: true
+  email:
+    enabled: false
+    require_confirmation_for_send: true
+  calendar:
+    enabled: false
+    require_confirmation_for_write: true
+  browser:
+    enabled: false
