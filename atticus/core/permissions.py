@@ -22,15 +22,15 @@ def ensure_tools_enabled(cfg: AppConfig) -> None:
     if not cfg.tools.enabled:
         raise PermissionDenied(
             "Tools are disabled in configuration (tools.enabled=false). "
-            "No shell, file, browser, email, or calendar actions are available in Phase 1."
+            "No shell, file, browser, email, or calendar actions are available until enabled."
         )
 
 
 def ensure_shell_allowed(cfg: AppConfig) -> None:
     ensure_tools_enabled(cfg)
-    raise PermissionDenied("Shell execution is not available in Phase 1.")
+    raise PermissionDenied("Shell execution is not wired up yet.")
 
 
 def ensure_file_write_allowed(cfg: AppConfig) -> None:
     ensure_tools_enabled(cfg)
-    raise PermissionDenied("File write tools are not available in Phase 1.")
+    raise PermissionDenied("File write tools are not wired up yet.")

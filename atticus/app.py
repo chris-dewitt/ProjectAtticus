@@ -8,15 +8,22 @@ from typing import Any
 from rich.console import Console
 from rich.markdown import Markdown
 
+from atticus.core.approvals import ConsoleYesNoSource, confirm_exact_token, request_tool_approval
 from atticus.core.config import load_app_config, resolve_repo_root
 from atticus.core.errors import AtticusError, ConfigurationError, ProviderError
+from atticus.core.natural import parse_natural_command
+from atticus.core.permissions import PermissionClass
 from atticus.core.persona import build_system_prompt
 from atticus.core.router import ProviderRouter
+from atticus.core.tool_request import ToolCallRequest
+from atticus.memory.context import build_memory_context_block
 from atticus.memory.store import MemoryStore
 from atticus.prompts.modes import valid_modes
 from atticus.voice.tts import maybe_speak
 
 console = Console()
+
+_FORGET_ALL_TOKEN = "YES"
 
 
 def _split_command(line: str) -> tuple[str, list[str]]:
@@ -29,13 +36,21 @@ def _split_command(line: str) -> tuple[str, list[str]]:
 def _help_text() -> str:
     return (
         "Slash commands:\n"
-        "  /help              Show this message\n"
-        "  /exit              Leave the chat\n"
-        "  /provider [name]   Show or set provider: openai | anthropic | gemini\n"
-        "  /mode [name]       Show or set mode (e.g. default, coding_partner)\n"
-        "  /memory            List saved memory items\n"
-        "  /remember <text>   Save a note to local memory\n"
-        "  /forget <id>|all   Forget one id or everything\n"
+        "  /help                 Show this message\n"
+        "  /exit                 Leave the chat\n"
+        "  /provider [name]      Show or set provider: openai | anthropic | gemini\n"
+        "  /mode [name]          Show or set mode (e.g. default, coding_partner)\n"
+        "  /memory [section]     Overview, or: items | prefs | summaries | audit\n"
+        "  /remember <text>      Save a note to local memory\n"
+        "  /recall <query>       Search saved notes (substring)\n"
+        "  /pref list|get|set|forget ...\n"
+        "  /summary add <text>   Store a conversation/session summary locally\n"
+        "  /forget ...           Forget by id, all (requires YES), match <text>, pref <key>, summary <id>\n"
+        "\n"
+        "Natural language (examples):\n"
+        '  Atticus, remember that ...\n'
+        '  Atticus, forget that ...   (substring soft-delete; asks approval)\n'
+        '  Atticus, what do you remember about ...?\n'
     )
 
 
@@ -52,7 +67,7 @@ def run_cli() -> int:
 
     repo_root = resolve_repo_root(cfg, config_file=config_path)
     try:
-        system_prompt = build_system_prompt(repo_root, cfg.assistant.default_mode)
+        persona_core = build_system_prompt(repo_root, cfg.assistant.default_mode)
     except ConfigurationError as exc:
         console.print(f"[red]{exc}[/red]")
         return 2
@@ -64,7 +79,26 @@ def run_cli() -> int:
         mem_path = (Path.cwd() / mem_path).resolve()
     memory = MemoryStore(mem_path)
 
-    messages: list[dict[str, Any]] = [{"role": "system", "content": system_prompt}]
+    messages: list[dict[str, Any]] = [{"role": "system", "content": persona_core}]
+    yesno = ConsoleYesNoSource(console)
+
+    def refresh_system_message() -> None:
+        block = build_memory_context_block(memory, cfg) if cfg.privacy.memory_enabled else ""
+        if block.strip():
+            messages[0] = {
+                "role": "system",
+                "content": f"{persona_core}\n\n---\n\n## Local memory context\n\n{block}",
+            }
+        else:
+            messages[0] = {"role": "system", "content": persona_core}
+
+    def require_memory() -> bool:
+        if not cfg.privacy.memory_enabled:
+            console.print("[red]Memory is disabled in config (privacy.memory_enabled=false).[/red]")
+            return False
+        return True
+
+    refresh_system_message()
 
     console.print(
         f"[bold green]Atticus[/bold green] online — provider={router.current}, mode={mode}. "
@@ -81,6 +115,56 @@ def run_cli() -> int:
 
         if not raw:
             continue
+
+        natural = parse_natural_command(raw)
+        if natural:
+            verb, payload = natural
+            if not require_memory():
+                continue
+            if verb == "remember":
+                if not payload:
+                    console.print("Tell me what to remember, Boss.")
+                    continue
+                mid = memory.add_item(payload)
+                console.print(f"Remembered as item [bold]{mid}[/bold].")
+                refresh_system_message()
+                continue
+            if verb == "forget":
+                if not cfg.memory.allow_forget:
+                    console.print("[red]Forget flow is disabled in config.[/red]")
+                    continue
+                if not payload:
+                    console.print("Tell me what to forget (substring match), Boss.")
+                    continue
+                req = ToolCallRequest(
+                    tool_name="memory_forget_match",
+                    permission_class=PermissionClass.DESTRUCTIVE,
+                    action_summary=f"Soft-delete all memory notes matching substring: {payload!r}",
+                    destructive=True,
+                )
+                if not request_tool_approval(yesno, memory, req):
+                    console.print("[dim]Cancelled. Nothing was forgotten.[/dim]")
+                    continue
+                n = memory.forget_items_matching(payload)
+                console.print(f"Soft-deleted [bold]{n}[/bold] matching note(s).")
+                refresh_system_message()
+                continue
+            if verb == "recall":
+                if payload:
+                    hits = memory.search_items(payload)
+                    if not hits:
+                        console.print("No matching notes found, Boss.")
+                    else:
+                        for it in hits:
+                            console.print(f"[bold]{it.id}[/bold] [{it.kind}] {it.content} — {it.created_at}")
+                else:
+                    items = memory.list_items(limit=10)
+                    if not items:
+                        console.print("No saved notes yet, Boss.")
+                    else:
+                        for it in items:
+                            console.print(f"[bold]{it.id}[/bold] [{it.kind}] {it.content} — {it.created_at}")
+                continue
 
         if raw.startswith("/"):
             cmd, args = _split_command(raw)
@@ -110,51 +194,207 @@ def run_cli() -> int:
                     console.print(f"[red]Unknown mode: {new_mode}[/red]")
                     continue
                 mode = new_mode
-                system_prompt = build_system_prompt(repo_root, mode)
-                if messages and messages[0].get("role") == "system":
-                    messages[0] = {"role": "system", "content": system_prompt}
-                else:
-                    messages.insert(0, {"role": "system", "content": system_prompt})
+                persona_core = build_system_prompt(repo_root, mode)
+                refresh_system_message()
                 console.print(f"Mode set to [bold]{mode}[/bold].")
                 continue
             if cmd == "/memory":
-                items = memory.list_items()
-                if not items:
-                    console.print("No saved memory items yet, Boss.")
-                else:
-                    for it in items:
-                        console.print(f"[bold]{it.id}[/bold] [{it.kind}] {it.content} — {it.created_at}")
+                if not require_memory():
+                    continue
+                section = (args[0].lower() if args else "overview")
+                if not args or section == "overview":
+                    n_notes = memory.count_active_items()
+                    n_prefs = memory.count_preferences()
+                    n_sum = memory.count_summaries()
+                    n_aud = memory.count_tool_approvals()
+                    console.print(
+                        f"Memory overview — notes: [bold]{n_notes}[/bold], preferences: [bold]{n_prefs}[/bold], "
+                        f"summaries: [bold]{n_sum}[/bold], audit rows: [bold]{n_aud}[/bold].\n"
+                        "Sections: [bold]/memory items|prefs|summaries|audit[/bold]"
+                    )
+                    continue
+                if section == "items":
+                    items = memory.list_items()
+                    if not items:
+                        console.print("No saved memory items yet, Boss.")
+                    else:
+                        for it in items:
+                            console.print(f"[bold]{it.id}[/bold] [{it.kind}] {it.content} — {it.created_at}")
+                    continue
+                if section == "prefs":
+                    prefs = memory.list_preferences()
+                    if not prefs:
+                        console.print("No preferences stored yet, Boss.")
+                    else:
+                        for p in prefs:
+                            src = f" ({p.source})" if p.source else ""
+                            console.print(f"[bold]{p.key}[/bold] = {p.value}{src}")
+                    continue
+                if section in {"summaries", "summary"}:
+                    sums = memory.list_summaries()
+                    if not sums:
+                        console.print("No conversation summaries yet, Boss.")
+                    else:
+                        for s in sums:
+                            console.print(
+                                f"[bold]{s.id}[/bold] [{s.mode or '-'} / {s.provider or '-'}] {s.summary} — {s.created_at}"
+                            )
+                    continue
+                if section == "audit":
+                    rows = memory.list_tool_approvals(limit=40)
+                    if not rows:
+                        console.print("No tool approval records yet, Boss.")
+                    else:
+                        for r in rows:
+                            flag = "approved" if r.approved else "denied"
+                            console.print(
+                                f"[bold]{r.id}[/bold] [{r.permission_class}] {r.tool_name} — {flag}\n"
+                                f"    {r.action_summary}\n"
+                                f"    {r.created_at}"
+                            )
+                    continue
+                console.print("[red]Unknown /memory section. Use items, prefs, summaries, or audit.[/red]")
                 continue
             if cmd == "/remember":
+                if not require_memory():
+                    continue
                 if not args:
                     console.print("Usage: /remember <text>")
                     continue
                 text = " ".join(args).strip()
                 mid = memory.add_item(text)
                 console.print(f"Remembered as item [bold]{mid}[/bold].")
+                refresh_system_message()
+                continue
+            if cmd == "/recall":
+                if not require_memory():
+                    continue
+                if not args:
+                    console.print("Usage: /recall <substring>")
+                    continue
+                q = " ".join(args).strip()
+                hits = memory.search_items(q)
+                if not hits:
+                    console.print("No matching notes found, Boss.")
+                else:
+                    for it in hits:
+                        console.print(f"[bold]{it.id}[/bold] [{it.kind}] {it.content} — {it.created_at}")
+                continue
+            if cmd == "/pref":
+                if not require_memory():
+                    continue
+                if not args:
+                    console.print("Usage: /pref list | /pref get <key> | /pref set <key> <value...> | /pref forget <key>")
+                    continue
+                sub = args[0].lower()
+                if sub == "list":
+                    prefs = memory.list_preferences()
+                    if not prefs:
+                        console.print("No preferences stored yet, Boss.")
+                    else:
+                        for p in prefs:
+                            console.print(f"[bold]{p.key}[/bold] = {p.value}")
+                    continue
+                if sub == "get" and len(args) >= 2:
+                    val = memory.get_preference(args[1])
+                    console.print(val if val is not None else f"No preference for key {args[1]!r}.")
+                    continue
+                if sub == "set" and len(args) >= 3:
+                    key = args[1]
+                    value = " ".join(args[2:]).strip()
+                    memory.upsert_preference(key, value, source="cli")
+                    console.print(f"Preference [bold]{key}[/bold] saved.")
+                    refresh_system_message()
+                    continue
+                if sub == "forget" and len(args) >= 2:
+                    ok = memory.delete_preference(args[1])
+                    console.print("Removed." if ok else "No such preference key.")
+                    refresh_system_message()
+                    continue
+                console.print("Usage: /pref list | /pref get <key> | /pref set <key> <value...> | /pref forget <key>")
+                continue
+            if cmd == "/summary":
+                if not require_memory():
+                    continue
+                if len(args) >= 2 and args[0].lower() == "add":
+                    text = " ".join(args[1:]).strip()
+                    sid = memory.add_conversation_summary(text, mode=mode, provider=router.current)
+                    console.print(f"Summary stored as [bold]{sid}[/bold].")
+                    refresh_system_message()
+                    continue
+                console.print("Usage: /summary add <text>")
                 continue
             if cmd == "/forget":
+                if not require_memory():
+                    continue
                 if not cfg.memory.allow_forget:
                     console.print("[red]Forget flow is disabled in config.[/red]")
                     continue
                 if not args:
-                    console.print("Usage: /forget <id> | /forget all")
+                    console.print(
+                        "Usage: /forget <id> | /forget all | /forget match <text> | /forget pref <key> | "
+                        "/forget summary <id>"
+                    )
                     continue
-                if args[0].lower() == "all":
+                sub = args[0].lower()
+                if sub == "all":
+                    if not confirm_exact_token(
+                        yesno,
+                        "Type YES in capitals to confirm deleting every memory note: ",
+                        _FORGET_ALL_TOKEN,
+                    ):
+                        console.print("[dim]Bulk forget cancelled.[/dim]")
+                        continue
                     n = memory.forget_all()
-                    console.print(f"Forgot [bold]{n}[/bold] items.")
+                    console.print(f"Forgot [bold]{n}[/bold] notes (soft delete).")
+                    refresh_system_message()
+                    continue
+                if sub == "match" and len(args) >= 2:
+                    needle = " ".join(args[1:]).strip()
+                    req = ToolCallRequest(
+                        tool_name="memory_forget_match",
+                        permission_class=PermissionClass.DESTRUCTIVE,
+                        action_summary=f"Soft-delete notes matching substring: {needle!r}",
+                        destructive=True,
+                    )
+                    if not request_tool_approval(yesno, memory, req):
+                        console.print("[dim]Cancelled.[/dim]")
+                        continue
+                    n = memory.forget_items_matching(needle)
+                    console.print(f"Soft-deleted [bold]{n}[/bold] note(s).")
+                    refresh_system_message()
+                    continue
+                if sub == "pref" and len(args) >= 2:
+                    ok = memory.delete_preference(args[1])
+                    console.print("Preference removed." if ok else "No such preference key.")
+                    refresh_system_message()
+                    continue
+                if sub == "summary" and len(args) >= 2:
+                    try:
+                        sid = int(args[1])
+                    except ValueError:
+                        console.print("Usage: /forget summary <id>")
+                        continue
+                    ok = memory.forget_summary_id(sid)
+                    console.print("Summary removed." if ok else f"No summary with id {sid}.")
+                    refresh_system_message()
                     continue
                 try:
                     item_id = int(args[0])
                 except ValueError:
-                    console.print("Usage: /forget <id> | /forget all")
+                    console.print(
+                        "Usage: /forget <id> | /forget all | /forget match <text> | /forget pref <key> | "
+                        "/forget summary <id>"
+                    )
                     continue
                 ok = memory.forget_id(item_id)
                 console.print("Forgotten." if ok else f"No active item with id {item_id}.")
+                refresh_system_message()
                 continue
             console.print(f"[red]Unknown command: {cmd}[/red]")
             continue
 
+        refresh_system_message()
         messages.append({"role": "user", "content": raw})
         try:
             reply = router.generate(messages, mode=mode)
@@ -176,7 +416,6 @@ def run_cli() -> int:
         try:
             maybe_speak(reply, enabled=cfg.voice.spoken_responses)
         except Exception:
-            # TTS must never take down the chat loop
             console.print("[dim]TTS skipped due to an internal error.[/dim]")
 
 
