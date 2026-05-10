@@ -110,4 +110,13 @@ Use **`/ptt`** (or **`/listen`**) to record from the mic for a few seconds and s
 
 Slash commands in the CLI: `/help`, `/exit`, `/provider`, `/mode`, `/memory`, `/remember`, `/forget`, plus Phase 2 memory and safety commands (`/memory items|prefs|summaries|audit`, `/pref`, `/recall`, `/summary add`, `/forget match|pref|summary`, natural-language remember/forget/recall), Phase 3 **`/mute`**, **`/unmute`**, **`/voice`**, and Phase 4–5 **`/ptt`**, **`/listen`**, **`/wake`**, **`/voice-kill`**, **`/voice-arm`**. Bulk note delete (`/forget all` or substring forget) asks for confirmation; tool decisions are written to the local audit table.
 
+## Phases 6–9 (tools, integrations, desk) — MVP in this repo
+
+- **Phase 6 — Local files:** with `tools.enabled` and `tools.files.enabled`, use **`/file read`**, **`/file search`**, **`/file write`**, **`/code-search`**, **`/summarize`** (paths must stay under `tools.approved_paths`). Writes and cloud-bound summarizes go through the same **y/N approval + audit** pattern as earlier phases. Optional PDF text: `pip install -e ".[pdf]"`.
+- **Phase 7 — Coding / git:** with `tools.shell.enabled`, **`/git …`** runs a **small allow-listed** set of read-only git commands (`git status`, `git diff`, `git branch --show-current`, `git log -1 --oneline`, and `git diff --stat -- …`). No arbitrary shell.
+- **Phase 8 — Integrations:** **`/integrations`** prints Gmail/Calendar/browser **roadmap stubs**. **`/gh issues owner repo`** hits the **public GitHub REST API** (optional `GITHUB_TOKEN` via `tools.github.token_env`). **`/open`** plus an `https://` URL uses the system browser when `tools.browser.enabled` and approvals pass.
+- **Phase 9 — Desk:** optional Textual hub — install **`pip install -e ".[desktop]"`** then run **`atticus-desktop`** (or `python -m atticus.desktop`). It is a companion window; full chat stays **`python -m atticus`**.
+
+OAuth mail/calendar, deep browser automation, autostart tray, and a full GUI chat are **not** finished here; they need product decisions and secrets handling beyond this codebase pass.
+
 Do not add real keys to `.env.example`. Keep `.env` and `config/atticus.yaml` out of git if they contain secrets or machine-specific paths.

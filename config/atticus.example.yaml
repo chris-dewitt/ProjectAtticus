@@ -67,6 +67,9 @@ tools:
   enabled: false
   approved_paths:
     - "C:\\Users\\DELL\\Documents\\GitHub\\ProjectAtticus"
+  github:
+    enabled: false
+    token_env: GITHUB_TOKEN
   shell:
     enabled: false
     require_confirmation: true

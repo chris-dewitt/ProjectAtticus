@@ -23,6 +23,7 @@ from atticus.voice.audio_state import VoiceSessionState
 from atticus.voice.stt import record_and_transcribe
 from atticus.voice.tts import VoiceOutput
 from atticus.voice.wake_word import wake_match
+from atticus.workbench_commands import ToolCliContext, handle_tool_slash
 
 console = Console()
 
@@ -56,6 +57,13 @@ def _help_text() -> str:
         "  /listen [seconds]     Same as /ptt\n"
         "  /wake                 Wake phrase clip, then command clip (Phase 5; all local)\n"
         "  /voice-kill | /voice-arm   Kill switch for all mic capture vs restore\n"
+        "  /file read|search|write …  Local file tools (tools.enabled + tools.files.enabled)\n"
+        "  /code-search <regex>   Search *.py under approved_paths (approval)\n"
+        "  /git <git …>          Allow-listed read-only git (tools.shell.enabled)\n"
+        "  /gh issues <o> <r>    Recent GitHub issues (tools.github.enabled)\n"
+        "  /open <url>           Browser open with approval when configured\n"
+        "  /summarize <path>     Send file excerpt to LLM (approval if privacy flag on)\n"
+        "  /integrations         Phase 8 placeholder status (Gmail/Calendar/Browser)\n"
         "\n"
         "Natural language (examples):\n"
         '  Atticus, remember that ...\n'
@@ -525,6 +533,18 @@ def run_cli() -> int:
                 ok = memory.forget_id(item_id)
                 console.print("Forgotten." if ok else f"No active item with id {item_id}.")
                 refresh_system_message()
+                continue
+            tctx = ToolCliContext(
+                cfg=cfg,
+                repo_root=repo_root,
+                memory=memory,
+                yesno=yesno,
+                router=router,
+                mode=mode,
+                persona_core=persona_core,
+                console=console,
+            )
+            if handle_tool_slash(cmd, args, tctx):
                 continue
             console.print(f"[red]Unknown command: {cmd}[/red]")
             continue

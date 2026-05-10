@@ -27,10 +27,13 @@ def ensure_tools_enabled(cfg: AppConfig) -> None:
 
 
 def ensure_shell_allowed(cfg: AppConfig) -> None:
+    """Shell/git: requires global tools plus tools.shell.enabled."""
     ensure_tools_enabled(cfg)
-    raise PermissionDenied("Shell execution is not wired up yet.")
+    if not cfg.tools.shell.enabled:
+        raise PermissionDenied("Shell tools are disabled (tools.shell.enabled=false).")
 
 
 def ensure_file_write_allowed(cfg: AppConfig) -> None:
     ensure_tools_enabled(cfg)
-    raise PermissionDenied("File write tools are not wired up yet.")
+    if not cfg.tools.files.enabled:
+        raise PermissionDenied("File tools are disabled (tools.files.enabled=false).")
