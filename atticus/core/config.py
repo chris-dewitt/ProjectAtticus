@@ -64,6 +64,8 @@ class PrivacyConfig(BaseModel):
     memory_enabled: bool = True
     store_raw_conversations: bool = False
     store_summaries: bool = True
+    ask_before_sending_files_to_cloud: bool = True
+    ask_before_open_url: bool = True
 
 
 class MemoryConfig(BaseModel):
@@ -103,9 +105,56 @@ class VoiceConfig(BaseModel):
     """0=lenient substring match, 1=stricter (reserved for future scoring)."""
 
 
+class ToolsShellConfig(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    enabled: bool = False
+    require_confirmation: bool = True
+
+
+class ToolsFilesConfig(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    enabled: bool = False
+    require_confirmation_for_edits: bool = True
+    max_read_bytes: int = 400_000
+    max_search_files: int = 2000
+
+
+class ToolsBrowserConfig(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    enabled: bool = False
+    require_confirmation: bool = True
+
+
+class ToolsEmailConfig(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    enabled: bool = False
+    require_confirmation_for_send: bool = True
+
+
+class ToolsCalendarConfig(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    enabled: bool = False
+    require_confirmation_for_write: bool = True
+
+
+class ToolsGitHubConfig(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    enabled: bool = False
+    token_env: str = "GITHUB_TOKEN"
+    repo_list_limit: int = 25
+    pr_list_limit: int = 20
+
+
 class ToolsConfig(BaseModel):
     model_config = ConfigDict(extra="ignore")
     enabled: bool = False
+    approved_paths: list[str] = Field(default_factory=list)
+    shell: ToolsShellConfig = Field(default_factory=ToolsShellConfig)
+    files: ToolsFilesConfig = Field(default_factory=ToolsFilesConfig)
+    browser: ToolsBrowserConfig = Field(default_factory=ToolsBrowserConfig)
+    email: ToolsEmailConfig = Field(default_factory=ToolsEmailConfig)
+    calendar: ToolsCalendarConfig = Field(default_factory=ToolsCalendarConfig)
+    github: ToolsGitHubConfig = Field(default_factory=ToolsGitHubConfig)
 
 
 class AppConfig(BaseModel):

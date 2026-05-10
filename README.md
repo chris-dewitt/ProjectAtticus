@@ -22,9 +22,39 @@ The first working demo is intentionally narrow:
 
 Voice, wake word, desktop tray, calendar/email, and full local automation come after the CLI is reliable.
 
+## Quick start (download and run)
+
+1. **Clone** this repository and `cd` into the project folder (the directory that contains `pyproject.toml`).
+2. Install **Python 3.11+** and use a virtual environment (recommended).
+
+**Windows (PowerShell):**
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -e ".[dev]"
+copy .env.example .env
+# Edit .env: set OPENAI_API_KEY=... (never commit .env)
+```
+
+3. **Run** from the repo root (so `prompts/` and bundled config resolve correctly):
+
+```powershell
+atticus
+```
+
+If you prefer not to use the installed script: `python -m atticus`.
+
+4. **Config:** If `config/atticus.yaml` is missing, Atticus loads `config/atticus.example.yaml` and prints a one-time warning. Copy the example to `config/atticus.yaml` only when you want machine-specific overrides (paths, voice, tools).
+
+5. **Verify (optional):** `pytest` — tests do not call paid APIs.
+
+6. **Optional extras:** `pip install -e ".[stt]"` for local microphone + Vosk, `pip install -e ".[desktop]"` for `atticus-desktop`, `pip install -e ".[secrets]"` for OS keyring-backed tokens.
+
 ## Repo target path
 
-Development target:
+Primary development machine (yours may differ):
 
 ```text
 C:\Users\DELL\Documents\GitHub\ProjectAtticus
@@ -72,21 +102,7 @@ Recommended phased stack:
 
 ## Phase 1 — Windows setup (CLI)
 
-Prerequisites: **Python 3.11+** on Windows, PowerShell, and an OpenAI API key for live replies (tests stay offline).
-
-```powershell
-cd C:\Users\DELL\Documents\GitHub\ProjectAtticus
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -e ".[dev]"
-copy .env.example .env
-# Edit .env and set OPENAI_API_KEY=... (never commit .env)
-# Optional local config (otherwise atticus.example.yaml is used with a warning):
-copy config\atticus.example.yaml config\atticus.yaml
-pytest
-python -m atticus
-```
+Same steps as **Quick start** above. After `pip install -e ".[dev]"`, you can run `pytest` then `atticus` (or `python -m atticus`).
 
 ## Phase 3 — Spoken replies (offline TTS)
 
@@ -109,5 +125,23 @@ Use **`/ptt`** (or **`/listen`**) to record from the mic for a few seconds and s
 **`/wake`** records a **wake clip** (looks for configured `voice.wake_phrases` in the transcript), then a **command clip**. No ambient audio is streamed to the cloud. **`/voice-kill`** immediately blocks **`/ptt`** and **`/wake`**; **`/voice-arm`** restores them.
 
 Slash commands in the CLI: `/help`, `/exit`, `/provider`, `/mode`, `/memory`, `/remember`, `/forget`, plus Phase 2 memory and safety commands (`/memory items|prefs|summaries|audit`, `/pref`, `/recall`, `/summary add`, `/forget match|pref|summary`, natural-language remember/forget/recall), Phase 3 **`/mute`**, **`/unmute`**, **`/voice`**, and Phase 4–5 **`/ptt`**, **`/listen`**, **`/wake`**, **`/voice-kill`**, **`/voice-arm`**. Bulk note delete (`/forget all` or substring forget) asks for confirmation; tool decisions are written to the local audit table.
+
+## Phases 6–9 (tools, integrations, desk) — MVP in this repo
+
+- **Phase 6 — Local files:** with `tools.enabled` and `tools.files.enabled`, use **`/file read`**, **`/file search`**, **`/file write`**, **`/code-search`**, **`/summarize`** (paths must stay under `tools.approved_paths`). Writes and cloud-bound summarizes go through the same **y/N approval + audit** pattern as earlier phases. Optional PDF text: `pip install -e ".[pdf]"`.
+- **Phase 7 — Coding / git:** with `tools.shell.enabled`, **`/git …`** runs a **small allow-listed** set of read-only git commands (`git status`, `git diff`, `git branch --show-current`, `git log -1 --oneline`, and `git diff --stat -- …`). No arbitrary shell.
+- **Phase 8 — Integrations:** **`/integrations`** prints Gmail/Calendar/browser **roadmap stubs**. **`/gh`** commands: **`me`**, **`repos`**, **`prs`**, **`issues`** (GitHub REST; token from env/keyring for authenticated calls). **`/open`** plus an `https://` URL uses the system browser when `tools.browser.enabled` and approvals pass.
+- **Phase 9 — Desk:** optional Textual hub — install **`pip install -e ".[desktop]"`** then run **`atticus-desktop`** (or `python -m atticus.desktop`). It is a companion window; full chat stays **`python -m atticus`**.
+
+OAuth mail/calendar, deep browser automation, autostart tray, and a full GUI chat are **not** finished here; they need product decisions and secrets handling beyond this codebase pass.
+
+### Full product — one step at a time (backlog)
+
+1. **Done:** shared **`get_credential(env)`** (`atticus/core/secrets.py`) — env first, optional **keyring** (`pip install -e ".[secrets]"`, `keyring set ProjectAtticus GITHUB_TOKEN`).
+2. **Done:** authenticated GitHub CLI — **`/gh me`**, **`/gh repos`**, **`/gh prs owner repo [open|closed|all]`** (token required for `me`/`repos`; `prs` uses token when set; all use **y/N approval** except **`/gh issues`** which stays quick for public repos). Limits: `tools.github.repo_list_limit`, `tools.github.pr_list_limit`.
+3. **Next good step:** **Gmail** read-only OAuth (device or installed app) + “never send without confirm”.
+4. Then: **Calendar** read, then writes behind double-confirm.
+5. Then: **Browser** helper with URL allowlist + citation capture.
+6. Then: **Tray / autostart** and richer **desktop** UI wiring into the same tool gates.
 
 Do not add real keys to `.env.example`. Keep `.env` and `config/atticus.yaml` out of git if they contain secrets or machine-specific paths.

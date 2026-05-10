@@ -10,6 +10,7 @@ from rich.markdown import Markdown
 
 from atticus.core.approvals import ConsoleYesNoSource, confirm_exact_token, request_tool_approval
 from atticus.core.config import load_app_config, resolve_repo_root
+from atticus.core.secrets import get_credential
 from atticus.core.errors import AtticusError, ConfigurationError, ProviderError, VoiceInputError
 from atticus.core.natural import parse_natural_command
 from atticus.core.permissions import PermissionClass
@@ -23,6 +24,7 @@ from atticus.voice.audio_state import VoiceSessionState
 from atticus.voice.stt import record_and_transcribe
 from atticus.voice.tts import VoiceOutput
 from atticus.voice.wake_word import wake_match
+from atticus.workbench_commands import ToolCliContext, handle_tool_slash
 
 console = Console()
 
@@ -56,6 +58,14 @@ def _help_text() -> str:
         "  /listen [seconds]     Same as /ptt\n"
         "  /wake                 Wake phrase clip, then command clip (Phase 5; all local)\n"
         "  /voice-kill | /voice-arm   Kill switch for all mic capture vs restore\n"
+        "  /file read|search|write …  Local file tools (tools.enabled + tools.files.enabled)\n"
+        "  /code-search <regex>   Search *.py under approved_paths (approval)\n"
+        "  /git <git …>          Allow-listed read-only git (tools.shell.enabled)\n"
+        "  /gh me | /gh repos | /gh prs <o> <r> [open|closed|all]  Authenticated GitHub (token + approval)\n"
+        "  /gh issues <o> <r>    Recent issues (public OK; token optional for rate limits)\n"
+        "  /open <url>           Browser open with approval when configured\n"
+        "  /summarize <path>     Send file excerpt to LLM (approval if privacy flag on)\n"
+        "  /integrations         Phase 8 placeholder status (Gmail/Calendar/Browser)\n"
         "\n"
         "Natural language (examples):\n"
         '  Atticus, remember that ...\n'
@@ -84,6 +94,13 @@ def run_cli() -> int:
 
     mode = cfg.assistant.default_mode
     router = ProviderRouter(cfg)
+    if router.current == "openai" and cfg.providers.openai.enabled:
+        key_env = cfg.providers.openai.api_key_env
+        if not get_credential(key_env):
+            console.print(
+                f"[yellow]No {key_env} yet — chat will fail until you set it "
+                f"(copy .env.example to .env, or pip install -e \".[secrets]\" and keyring).[/yellow]"
+            )
     voice_out = VoiceOutput(cfg.voice, console)
     voice_state = VoiceSessionState()
     mem_path = Path(cfg.memory.sqlite_path)
@@ -525,6 +542,18 @@ def run_cli() -> int:
                 ok = memory.forget_id(item_id)
                 console.print("Forgotten." if ok else f"No active item with id {item_id}.")
                 refresh_system_message()
+                continue
+            tctx = ToolCliContext(
+                cfg=cfg,
+                repo_root=repo_root,
+                memory=memory,
+                yesno=yesno,
+                router=router,
+                mode=mode,
+                persona_core=persona_core,
+                console=console,
+            )
+            if handle_tool_slash(cmd, args, tctx):
                 continue
             console.print(f"[red]Unknown command: {cmd}[/red]")
             continue

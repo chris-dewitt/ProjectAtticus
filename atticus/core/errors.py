@@ -16,3 +16,7 @@ class PermissionDenied(AtticusError):
 
 class VoiceInputError(AtticusError):
     """Microphone capture or local speech recognition failed."""
+
+
+class WorkspaceError(AtticusError):
+    """File path outside approved workspace or unsafe tool use."""
