@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "project-atticus"
-version = "0.9.0"
-description = "Local-first Windows assistant through Phase 9 (CLI, voice, tools, desk)"
+version = "1.0.0"
+description = "Local-first Windows assistant: CLI chat, memory, voice, optional tools, Textual desk"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -39,6 +39,7 @@ secrets = [
 ]
 
 [project.scripts]
+atticus = "atticus.app:main"
 atticus-desktop = "atticus.desktop:main"
 
 [tool.setuptools.packages.find]

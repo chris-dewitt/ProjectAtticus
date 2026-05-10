@@ -22,9 +22,39 @@ The first working demo is intentionally narrow:
 
 Voice, wake word, desktop tray, calendar/email, and full local automation come after the CLI is reliable.
 
+## Quick start (download and run)
+
+1. **Clone** this repository and `cd` into the project folder (the directory that contains `pyproject.toml`).
+2. Install **Python 3.11+** and use a virtual environment (recommended).
+
+**Windows (PowerShell):**
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -e ".[dev]"
+copy .env.example .env
+# Edit .env: set OPENAI_API_KEY=... (never commit .env)
+```
+
+3. **Run** from the repo root (so `prompts/` and bundled config resolve correctly):
+
+```powershell
+atticus
+```
+
+If you prefer not to use the installed script: `python -m atticus`.
+
+4. **Config:** If `config/atticus.yaml` is missing, Atticus loads `config/atticus.example.yaml` and prints a one-time warning. Copy the example to `config/atticus.yaml` only when you want machine-specific overrides (paths, voice, tools).
+
+5. **Verify (optional):** `pytest` — tests do not call paid APIs.
+
+6. **Optional extras:** `pip install -e ".[stt]"` for local microphone + Vosk, `pip install -e ".[desktop]"` for `atticus-desktop`, `pip install -e ".[secrets]"` for OS keyring-backed tokens.
+
 ## Repo target path
 
-Development target:
+Primary development machine (yours may differ):
 
 ```text
 C:\Users\DELL\Documents\GitHub\ProjectAtticus
@@ -72,21 +102,7 @@ Recommended phased stack:
 
 ## Phase 1 — Windows setup (CLI)
 
-Prerequisites: **Python 3.11+** on Windows, PowerShell, and an OpenAI API key for live replies (tests stay offline).
-
-```powershell
-cd C:\Users\DELL\Documents\GitHub\ProjectAtticus
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -e ".[dev]"
-copy .env.example .env
-# Edit .env and set OPENAI_API_KEY=... (never commit .env)
-# Optional local config (otherwise atticus.example.yaml is used with a warning):
-copy config\atticus.example.yaml config\atticus.yaml
-pytest
-python -m atticus
-```
+Same steps as **Quick start** above. After `pip install -e ".[dev]"`, you can run `pytest` then `atticus` (or `python -m atticus`).
 
 ## Phase 3 — Spoken replies (offline TTS)
 

@@ -1,9 +1,12 @@
+# Example configuration — copied automatically if config/atticus.yaml is missing.
+# For local overrides: copy this file to config/atticus.yaml (gitignored).
+
 assistant:
   name: Atticus
   user_address: Boss
   default_mode: default
   default_provider: openai
-  repo_path: "C:\\Users\\DELL\\Documents\\GitHub\\ProjectAtticus"
+  # Leave repo_path unset so prompts load from the repo root (parent of config/).
 
 providers:
   routing:
@@ -12,17 +15,17 @@ providers:
     allow_manual_override: true
   openai:
     enabled: true
-    model: "gpt-5.5"
+    model: "gpt-4o-mini"
     api_key_env: OPENAI_API_KEY
     timeout_seconds: 60
   anthropic:
     enabled: true
-    model: "claude-sonnet-latest"
+    model: "claude-3-5-sonnet-20241022"
     api_key_env: ANTHROPIC_API_KEY
     timeout_seconds: 60
   gemini:
     enabled: true
-    model: "gemini-3-flash-preview"
+    model: "gemini-1.5-flash"
     api_key_env: GEMINI_API_KEY
     timeout_seconds: 60
 
@@ -31,11 +34,7 @@ privacy:
   store_raw_conversations: false
   store_summaries: true
   ask_before_sending_files_to_cloud: true
-  ask_before_shell_commands: true
-  ask_before_file_edits: true
-  ask_before_email_send: true
-  ask_before_calendar_write: true
-  audit_tool_calls: true
+  ask_before_open_url: true
 
 memory:
   backend: sqlite
@@ -43,20 +42,17 @@ memory:
   allow_forget: true
 
 voice:
-  spoken_responses: true
+  spoken_responses: false
   muted: false
   tts_engine: pyttsx3
   tts_rate: null
-  stt_engine: local
-  push_to_talk_default_seconds: 8
+  stt_engine: none
+  push_to_talk_default_seconds: 8.0
   vosk_model_path: null
   microphone_device: null
   sample_rate_hz: 16000
-  wake_listen_seconds: 12
-  wake_command_seconds: 10
-  wake_word_engine: local
-  cloud_audio_allowed: false
-  push_to_talk_enabled: true
+  wake_listen_seconds: 12.0
+  wake_command_seconds: 10.0
   wake_phrases:
     - Atticus
     - Hey Atticus
@@ -65,8 +61,9 @@ voice:
 
 tools:
   enabled: false
+  # When you enable file tools, list directories Atticus may read (resolved from cwd):
   approved_paths:
-    - "C:\\Users\\DELL\\Documents\\GitHub\\ProjectAtticus"
+    - "."
   github:
     enabled: false
     token_env: GITHUB_TOKEN
