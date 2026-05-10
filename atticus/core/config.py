@@ -76,7 +76,9 @@ class MemoryConfig(BaseModel):
 class VoiceConfig(BaseModel):
     model_config = ConfigDict(extra="ignore")
     spoken_responses: bool = False
+    muted: bool = False
     tts_engine: str = "pyttsx3"
+    tts_rate: int | None = None
 
 
 class ToolsConfig(BaseModel):

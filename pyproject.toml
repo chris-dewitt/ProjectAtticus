@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "project-atticus"
-version = "0.1.0"
-description = "Local-first Windows assistant (Phase 1 CLI)"
+version = "0.3.0"
+description = "Local-first Windows assistant (CLI + Phase 3 offline TTS)"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -15,6 +15,7 @@ dependencies = [
   "pyyaml>=6.0",
   "python-dotenv>=1.0",
   "rich>=13.7",
+  "pyttsx3>=2.90",
 ]
 
 [project.optional-dependencies]

@@ -88,6 +88,12 @@ pytest
 python -m atticus
 ```
 
-Slash commands in the CLI: `/help`, `/exit`, `/provider`, `/mode`, `/memory`, `/remember`, `/forget`, plus Phase 2 memory and safety commands (`/memory items|prefs|summaries|audit`, `/pref`, `/recall`, `/summary add`, `/forget match|pref|summary`, natural-language remember/forget/recall). Bulk note delete (`/forget all` or substring forget) asks for confirmation; tool decisions are written to the local audit table.
+## Phase 3 — Spoken replies (offline TTS)
+
+Replies are spoken with **`pyttsx3`** (Windows SAPI voices) when `voice.spoken_responses` is true in config. Use **`/mute`** and **`/unmute`** for a runtime pause without editing YAML; **`/voice`** shows the current flags. If the engine fails to start or playback errors, you still get full text output and a yellow warning—nothing in the chat loop hard-depends on audio.
+
+Optional tuning: set `voice.tts_rate` to an integer (words per minute) if your machine supports it. Set `voice.muted: true` in YAML to start sessions silent until Boss runs `/unmute`.
+
+Slash commands in the CLI: `/help`, `/exit`, `/provider`, `/mode`, `/memory`, `/remember`, `/forget`, plus Phase 2 memory and safety commands (`/memory items|prefs|summaries|audit`, `/pref`, `/recall`, `/summary add`, `/forget match|pref|summary`, natural-language remember/forget/recall), and Phase 3 **`/mute`**, **`/unmute`**, **`/voice`**. Bulk note delete (`/forget all` or substring forget) asks for confirmation; tool decisions are written to the local audit table.
 
 Do not add real keys to `.env.example`. Keep `.env` and `config/atticus.yaml` out of git if they contain secrets or machine-specific paths.

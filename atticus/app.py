@@ -19,7 +19,7 @@ from atticus.core.tool_request import ToolCallRequest
 from atticus.memory.context import build_memory_context_block
 from atticus.memory.store import MemoryStore
 from atticus.prompts.modes import valid_modes
-from atticus.voice.tts import maybe_speak
+from atticus.voice.tts import VoiceOutput
 
 console = Console()
 
@@ -47,6 +47,8 @@ def _help_text() -> str:
         "  /pref list|get|set|forget ...\n"
         "  /summary add <text>   Store a conversation/session summary locally\n"
         "  /forget ...           Forget by id, all (requires YES), match <text>, pref <key>, summary <id>\n"
+        "  /mute | /unmute       Pause or resume spoken replies (runtime; text always works)\n"
+        "  /voice                Show speech-related settings\n"
         "\n"
         "Natural language (examples):\n"
         '  Atticus, remember that ...\n'
@@ -75,6 +77,7 @@ def run_cli() -> int:
 
     mode = cfg.assistant.default_mode
     router = ProviderRouter(cfg)
+    voice_out = VoiceOutput(cfg.voice, console)
     mem_path = Path(cfg.memory.sqlite_path)
     if not mem_path.is_absolute():
         mem_path = (Path.cwd() / mem_path).resolve()
@@ -175,6 +178,27 @@ def run_cli() -> int:
                 return 0
             if cmd == "/help":
                 console.print(_help_text())
+                continue
+            if cmd == "/mute":
+                voice_out.set_muted(True)
+                console.print("[dim]Speech muted. You will still see every reply here, Boss.[/dim]")
+                continue
+            if cmd == "/unmute":
+                voice_out.set_muted(False)
+                if not cfg.voice.spoken_responses:
+                    console.print(
+                        "[yellow]Config has voice.spoken_responses=false; enable it to hear replies aloud.[/yellow]"
+                    )
+                else:
+                    console.print("[dim]Speech unmuted (when TTS is available).[/dim]")
+                continue
+            if cmd == "/voice":
+                console.print(
+                    f"voice.spoken_responses (config): [bold]{cfg.voice.spoken_responses}[/bold]\n"
+                    f"runtime muted: [bold]{voice_out.runtime_muted}[/bold]\n"
+                    f"voice.tts_engine: [bold]{cfg.voice.tts_engine}[/bold]\n"
+                    f"voice.tts_rate: [bold]{cfg.voice.tts_rate}[/bold]"
+                )
                 continue
             if cmd == "/provider":
                 if not args:
@@ -414,10 +438,7 @@ def run_cli() -> int:
 
         messages.append({"role": "assistant", "content": reply})
         _render_reply(reply)
-        try:
-            maybe_speak(reply, enabled=cfg.voice.spoken_responses)
-        except Exception:
-            console.print("[dim]TTS skipped due to an internal error.[/dim]")
+        voice_out.speak(reply)
 
 
 def main() -> None:
