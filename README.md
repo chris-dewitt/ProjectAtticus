@@ -70,17 +70,44 @@ Recommended phased stack:
 9. Atticus should eventually speak aloud by default, but the first milestone is CLI chat.
 10. The persona should be full-character Southern gentleman, but never racist, exclusionary, cruel, or servile.
 
-## First useful command sequence
+## Phase 1 — Windows setup (CLI)
 
-After implementation begins, the expected developer flow should become something like:
+Prerequisites: **Python 3.11+** on Windows, PowerShell, and an OpenAI API key for live replies (tests stay offline).
 
 ```powershell
 cd C:\Users\DELL\Documents\GitHub\ProjectAtticus
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+python -m pip install --upgrade pip
+pip install -e ".[dev]"
 copy .env.example .env
+# Edit .env and set OPENAI_API_KEY=... (never commit .env)
+# Optional local config (otherwise atticus.example.yaml is used with a warning):
+copy config\atticus.example.yaml config\atticus.yaml
+pytest
 python -m atticus
 ```
 
-Do not add real keys to `.env.example`. Keep `.env` ignored by git.
+## Phase 3 — Spoken replies (offline TTS)
+
+Replies are spoken with **`pyttsx3`** (Windows SAPI voices) when `voice.spoken_responses` is true in config. Use **`/mute`** and **`/unmute`** for a runtime pause without editing YAML; **`/voice`** shows the current flags. If the engine fails to start or playback errors, you still get full text output and a yellow warning—nothing in the chat loop hard-depends on audio.
+
+Optional tuning: set `voice.tts_rate` to an integer (words per minute) if your machine supports it. Set `voice.muted: true` in YAML to start sessions silent until Boss runs `/unmute`.
+
+## Phase 4 — Speech in (push-to-talk, local STT)
+
+Install optional STT stack, then point **`voice.vosk_model_path`** at an unpacked Vosk model directory (see `docs/VOICE_LOCAL_AUDIO.md`):
+
+```powershell
+pip install -e ".[dev,stt]"
+```
+
+Use **`/ptt`** (or **`/listen`**) to record from the mic for a few seconds and send the transcript into the same chat path as typed text. Optional seconds: `/ptt 6`.
+
+## Phase 5 — Wake phrase (local, two clips)
+
+**`/wake`** records a **wake clip** (looks for configured `voice.wake_phrases` in the transcript), then a **command clip**. No ambient audio is streamed to the cloud. **`/voice-kill`** immediately blocks **`/ptt`** and **`/wake`**; **`/voice-arm`** restores them.
+
+Slash commands in the CLI: `/help`, `/exit`, `/provider`, `/mode`, `/memory`, `/remember`, `/forget`, plus Phase 2 memory and safety commands (`/memory items|prefs|summaries|audit`, `/pref`, `/recall`, `/summary add`, `/forget match|pref|summary`, natural-language remember/forget/recall), Phase 3 **`/mute`**, **`/unmute`**, **`/voice`**, and Phase 4–5 **`/ptt`**, **`/listen`**, **`/wake`**, **`/voice-kill`**, **`/voice-arm`**. Bulk note delete (`/forget all` or substring forget) asks for confirmation; tool decisions are written to the local audit table.
+
+Do not add real keys to `.env.example`. Keep `.env` and `config/atticus.yaml` out of git if they contain secrets or machine-specific paths.
