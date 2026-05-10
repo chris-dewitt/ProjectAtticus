@@ -15,7 +15,7 @@ from atticus.core.permissions import PermissionClass
 from atticus.core.router import ProviderRouter
 from atticus.core.tool_request import ToolCallRequest
 from atticus.integrations import deferred
-from atticus.integrations.github_public import fetch_recent_issue_titles, github_token_from_config
+from atticus.integrations import github_public as gh_api
 from atticus.memory.store import MemoryStore
 from atticus.services.git_runner import run_git
 from atticus.services.paths import approved_roots, resolve_under_approved
@@ -145,14 +145,69 @@ def handle_tool_slash(cmd: str, args: list[str], ctx: ToolCliContext) -> bool:
             ctx.console.print(out or "(no output)")
             return True
 
-        if cmd in {"/gh", "/github"} and args and args[0].lower() == "issues" and len(args) >= 3:
+        if cmd in {"/gh", "/github"} and args:
             _ensure_github(ctx)
-            owner, repo = args[1], args[2]
-            tok = github_token_from_config(ctx.cfg.tools.github.token_env)
-            titles = fetch_recent_issue_titles(owner, repo, token=tok)
-            for line in titles:
-                ctx.console.print(line)
-            return True
+            sub = args[0].lower()
+            env_name = ctx.cfg.tools.github.token_env
+            tok = gh_api.github_token_from_config(env_name)
+
+            if sub == "me":
+                token = gh_api.require_github_token(tok, token_env=env_name, for_action="/gh me")
+                req = ToolCallRequest(
+                    tool_name="github_user",
+                    permission_class=PermissionClass.EXTERNAL_SEND,
+                    action_summary="Call GitHub GET /user with your token (login + display name only).",
+                    external_data=True,
+                )
+                if not request_tool_approval(ctx.yesno, ctx.memory, req):
+                    ctx.console.print("[dim]Cancelled.[/dim]")
+                    return True
+                login, name = gh_api.fetch_authenticated_profile(token)
+                ctx.console.print(f"[bold]login:[/bold] {login}")
+                if name:
+                    ctx.console.print(f"[bold]name:[/bold] {name}")
+                return True
+
+            if sub == "repos":
+                token = gh_api.require_github_token(tok, token_env=env_name, for_action="/gh repos")
+                lim = int(ctx.cfg.tools.github.repo_list_limit)
+                req = ToolCallRequest(
+                    tool_name="github_repos",
+                    permission_class=PermissionClass.EXTERNAL_SEND,
+                    action_summary=f"Call GitHub GET /user/repos (up to {lim} repos, affiliation owner/collaborator/org).",
+                    external_data=True,
+                )
+                if not request_tool_approval(ctx.yesno, ctx.memory, req):
+                    ctx.console.print("[dim]Cancelled.[/dim]")
+                    return True
+                for line in gh_api.fetch_authenticated_repos(token, limit=lim):
+                    ctx.console.print(line)
+                return True
+
+            if sub == "prs" and len(args) >= 3:
+                owner, repo = args[1], args[2]
+                state = args[3].lower() if len(args) >= 4 else "open"
+                if state not in {"open", "closed", "all"}:
+                    state = "open"
+                lim = int(ctx.cfg.tools.github.pr_list_limit)
+                req = ToolCallRequest(
+                    tool_name="github_pulls",
+                    permission_class=PermissionClass.EXTERNAL_SEND,
+                    action_summary=f"Call GitHub GET /repos/{owner}/{repo}/pulls (state={state}, up to {lim}).",
+                    external_data=True,
+                )
+                if not request_tool_approval(ctx.yesno, ctx.memory, req):
+                    ctx.console.print("[dim]Cancelled.[/dim]")
+                    return True
+                for line in gh_api.fetch_pull_requests(owner, repo, token=tok, limit=lim, state=state):
+                    ctx.console.print(line)
+                return True
+
+            if sub == "issues" and len(args) >= 3:
+                owner, repo = args[1], args[2]
+                for line in gh_api.fetch_recent_issue_titles(owner, repo, token=tok):
+                    ctx.console.print(line)
+                return True
 
         if cmd == "/open" and args:
             _ensure_browser(ctx)

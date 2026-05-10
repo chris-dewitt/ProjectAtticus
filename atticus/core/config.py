@@ -141,6 +141,8 @@ class ToolsGitHubConfig(BaseModel):
     model_config = ConfigDict(extra="ignore")
     enabled: bool = False
     token_env: str = "GITHUB_TOKEN"
+    repo_list_limit: int = 25
+    pr_list_limit: int = 20
 
 
 class ToolsConfig(BaseModel):

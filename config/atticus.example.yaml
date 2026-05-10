@@ -70,6 +70,8 @@ tools:
   github:
     enabled: false
     token_env: GITHUB_TOKEN
+    repo_list_limit: 25
+    pr_list_limit: 20
   shell:
     enabled: false
     require_confirmation: true

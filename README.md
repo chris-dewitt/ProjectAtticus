@@ -114,16 +114,16 @@ Slash commands in the CLI: `/help`, `/exit`, `/provider`, `/mode`, `/memory`, `/
 
 - **Phase 6 — Local files:** with `tools.enabled` and `tools.files.enabled`, use **`/file read`**, **`/file search`**, **`/file write`**, **`/code-search`**, **`/summarize`** (paths must stay under `tools.approved_paths`). Writes and cloud-bound summarizes go through the same **y/N approval + audit** pattern as earlier phases. Optional PDF text: `pip install -e ".[pdf]"`.
 - **Phase 7 — Coding / git:** with `tools.shell.enabled`, **`/git …`** runs a **small allow-listed** set of read-only git commands (`git status`, `git diff`, `git branch --show-current`, `git log -1 --oneline`, and `git diff --stat -- …`). No arbitrary shell.
-- **Phase 8 — Integrations:** **`/integrations`** prints Gmail/Calendar/browser **roadmap stubs**. **`/gh issues owner repo`** hits the **public GitHub REST API** (optional `GITHUB_TOKEN` via `tools.github.token_env`). **`/open`** plus an `https://` URL uses the system browser when `tools.browser.enabled` and approvals pass.
+- **Phase 8 — Integrations:** **`/integrations`** prints Gmail/Calendar/browser **roadmap stubs**. **`/gh`** commands: **`me`**, **`repos`**, **`prs`**, **`issues`** (GitHub REST; token from env/keyring for authenticated calls). **`/open`** plus an `https://` URL uses the system browser when `tools.browser.enabled` and approvals pass.
 - **Phase 9 — Desk:** optional Textual hub — install **`pip install -e ".[desktop]"`** then run **`atticus-desktop`** (or `python -m atticus.desktop`). It is a companion window; full chat stays **`python -m atticus`**.
 
 OAuth mail/calendar, deep browser automation, autostart tray, and a full GUI chat are **not** finished here; they need product decisions and secrets handling beyond this codebase pass.
 
 ### Full product — one step at a time (backlog)
 
-1. **Done (this commit):** shared **`get_credential(env)`** (`atticus/core/secrets.py`) — reads **environment** first, then optional **OS keyring** when you `pip install -e ".[secrets]"` and e.g. `keyring set ProjectAtticus GITHUB_TOKEN`. GitHub CLI commands use it automatically.
-2. **Next good step:** authenticated **GitHub** beyond public issues (repos you own, PRs) using the same secret pattern — still CLI + approvals.
-3. Then: **Gmail** read-only OAuth (device or installed-app flow) + “never send without confirm”.
+1. **Done:** shared **`get_credential(env)`** (`atticus/core/secrets.py`) — env first, optional **keyring** (`pip install -e ".[secrets]"`, `keyring set ProjectAtticus GITHUB_TOKEN`).
+2. **Done:** authenticated GitHub CLI — **`/gh me`**, **`/gh repos`**, **`/gh prs owner repo [open|closed|all]`** (token required for `me`/`repos`; `prs` uses token when set; all use **y/N approval** except **`/gh issues`** which stays quick for public repos). Limits: `tools.github.repo_list_limit`, `tools.github.pr_list_limit`.
+3. **Next good step:** **Gmail** read-only OAuth (device or installed app) + “never send without confirm”.
 4. Then: **Calendar** read, then writes behind double-confirm.
 5. Then: **Browser** helper with URL allowlist + citation capture.
 6. Then: **Tray / autostart** and richer **desktop** UI wiring into the same tool gates.
