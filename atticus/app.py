@@ -43,6 +43,7 @@ def _help_text() -> str:
         "  /memory [section]     Overview, or: items | prefs | summaries | audit\n"
         "  /remember <text>      Save a note to local memory\n"
         "  /recall <query>       Search saved notes (substring)\n"
+        "  /what-do-you-remember <query>   Same as /recall (docs name)\n"
         "  /pref list|get|set|forget ...\n"
         "  /summary add <text>   Store a conversation/session summary locally\n"
         "  /forget ...           Forget by id, all (requires YES), match <text>, pref <key>, summary <id>\n"
@@ -266,11 +267,11 @@ def run_cli() -> int:
                 console.print(f"Remembered as item [bold]{mid}[/bold].")
                 refresh_system_message()
                 continue
-            if cmd == "/recall":
+            if cmd in {"/recall", "/what-do-you-remember"}:
                 if not require_memory():
                     continue
                 if not args:
-                    console.print("Usage: /recall <substring>")
+                    console.print("Usage: /recall <substring>  (or /what-do-you-remember <substring>)")
                     continue
                 q = " ".join(args).strip()
                 hits = memory.search_items(q)
