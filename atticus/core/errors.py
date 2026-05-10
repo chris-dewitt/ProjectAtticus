@@ -12,3 +12,7 @@ class ProviderError(AtticusError):
 
 class PermissionDenied(AtticusError):
     """Action blocked by the permission model."""
+
+
+class VoiceInputError(AtticusError):
+    """Microphone capture or local speech recognition failed."""

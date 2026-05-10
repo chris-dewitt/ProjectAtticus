@@ -10,7 +10,7 @@ from rich.markdown import Markdown
 
 from atticus.core.approvals import ConsoleYesNoSource, confirm_exact_token, request_tool_approval
 from atticus.core.config import load_app_config, resolve_repo_root
-from atticus.core.errors import AtticusError, ConfigurationError, ProviderError
+from atticus.core.errors import AtticusError, ConfigurationError, ProviderError, VoiceInputError
 from atticus.core.natural import parse_natural_command
 from atticus.core.permissions import PermissionClass
 from atticus.core.persona import build_system_prompt
@@ -19,7 +19,10 @@ from atticus.core.tool_request import ToolCallRequest
 from atticus.memory.context import build_memory_context_block
 from atticus.memory.store import MemoryStore
 from atticus.prompts.modes import valid_modes
+from atticus.voice.audio_state import VoiceSessionState
+from atticus.voice.stt import record_and_transcribe
 from atticus.voice.tts import VoiceOutput
+from atticus.voice.wake_word import wake_match
 
 console = Console()
 
@@ -49,6 +52,10 @@ def _help_text() -> str:
         "  /forget ...           Forget by id, all (requires YES), match <text>, pref <key>, summary <id>\n"
         "  /mute | /unmute       Pause or resume spoken replies (runtime; text always works)\n"
         "  /voice                Show speech-related settings\n"
+        "  /ptt [seconds]        Push-to-talk: local Vosk STT (requires .[stt] + model path)\n"
+        "  /listen [seconds]     Same as /ptt\n"
+        "  /wake                 Wake phrase clip, then command clip (Phase 5; all local)\n"
+        "  /voice-kill | /voice-arm   Kill switch for all mic capture vs restore\n"
         "\n"
         "Natural language (examples):\n"
         '  Atticus, remember that ...\n'
@@ -78,6 +85,7 @@ def run_cli() -> int:
     mode = cfg.assistant.default_mode
     router = ProviderRouter(cfg)
     voice_out = VoiceOutput(cfg.voice, console)
+    voice_state = VoiceSessionState()
     mem_path = Path(cfg.memory.sqlite_path)
     if not mem_path.is_absolute():
         mem_path = (Path.cwd() / mem_path).resolve()
@@ -101,6 +109,78 @@ def run_cli() -> int:
             console.print("[red]Memory is disabled in config (privacy.memory_enabled=false).[/red]")
             return False
         return True
+
+    def process_chat_turn(user_text: str) -> None:
+        nonlocal messages, mode
+        refresh_system_message()
+        messages.append({"role": "user", "content": user_text})
+        try:
+            reply = router.generate(messages, mode=mode)
+        except ProviderError as exc:
+            console.print(f"[red]{exc}[/red]")
+            messages.pop()
+            return
+        except AtticusError as exc:
+            console.print(f"[red]{exc}[/red]")
+            messages.pop()
+            return
+        except Exception as exc:
+            console.print(f"[red]Unexpected error: {exc}[/red]")
+            messages.pop()
+            return
+        messages.append({"role": "assistant", "content": reply})
+        _render_reply(reply)
+        voice_out.speak(reply)
+
+    def try_ptt(seconds: float) -> None:
+        try:
+            text = record_and_transcribe(
+                cfg.voice, seconds=seconds, console=console, label="Push-to-talk"
+            )
+        except VoiceInputError as exc:
+            console.print(f"[red]{exc}[/red]")
+            return
+        if text.strip():
+            process_chat_turn(text.strip())
+
+    def try_wake_flow() -> None:
+        if not voice_state.voice_input_armed:
+            console.print(
+                "[red]Voice input kill switch is active — mic capture is disabled. "
+                "Use /voice-arm when you are ready.[/red]"
+            )
+            return
+        console.print(
+            "[bold red]●[/bold red] [yellow]LISTENING for a wake phrase (local Vosk; no cloud audio)…[/yellow]"
+        )
+        try:
+            t_wake = record_and_transcribe(
+                cfg.voice,
+                seconds=float(cfg.voice.wake_listen_seconds),
+                console=console,
+                label="Wake listen",
+            )
+        except VoiceInputError as exc:
+            console.print(f"[red]{exc}[/red]")
+            return
+        if not wake_match(t_wake, cfg.voice):
+            console.print(
+                "[yellow]No wake phrase detected in that clip. Try /wake again, or use /ptt without wake.[/yellow]"
+            )
+            return
+        console.print("[bold green]Wake heard.[/bold green] Recording your command…")
+        try:
+            t_cmd = record_and_transcribe(
+                cfg.voice,
+                seconds=float(cfg.voice.wake_command_seconds),
+                console=console,
+                label="Command",
+            )
+        except VoiceInputError as exc:
+            console.print(f"[red]{exc}[/red]")
+            return
+        if t_cmd.strip():
+            process_chat_turn(t_cmd.strip())
 
     refresh_system_message()
 
@@ -197,8 +277,38 @@ def run_cli() -> int:
                     f"voice.spoken_responses (config): [bold]{cfg.voice.spoken_responses}[/bold]\n"
                     f"runtime muted: [bold]{voice_out.runtime_muted}[/bold]\n"
                     f"voice.tts_engine: [bold]{cfg.voice.tts_engine}[/bold]\n"
-                    f"voice.tts_rate: [bold]{cfg.voice.tts_rate}[/bold]"
+                    f"voice.tts_rate: [bold]{cfg.voice.tts_rate}[/bold]\n"
+                    f"voice.stt_engine: [bold]{cfg.voice.stt_engine}[/bold]\n"
+                    f"voice.vosk_model_path: [bold]{cfg.voice.vosk_model_path}[/bold]\n"
+                    f"voice.push_to_talk_default_seconds: [bold]{cfg.voice.push_to_talk_default_seconds}[/bold]\n"
+                    f"voice.wake_listen_seconds / wake_command_seconds: "
+                    f"[bold]{cfg.voice.wake_listen_seconds}[/bold] / [bold]{cfg.voice.wake_command_seconds}[/bold]\n"
+                    f"voice_input_armed (kill switch): [bold]{voice_state.voice_input_armed}[/bold]"
                 )
+                continue
+            if cmd == "/voice-kill":
+                voice_state.disarm()
+                console.print("[red]Voice kill switch: microphone capture disabled for /ptt and /wake.[/red]")
+                continue
+            if cmd == "/voice-arm":
+                voice_state.arm()
+                console.print("[dim]Voice input re-armed. /ptt and /wake work again.[/dim]")
+                continue
+            if cmd in {"/ptt", "/listen"}:
+                if not voice_state.voice_input_armed:
+                    console.print("[red]Voice input is disarmed. Use /voice-arm first.[/red]")
+                    continue
+                sec = float(cfg.voice.push_to_talk_default_seconds)
+                if args:
+                    try:
+                        sec = float(args[0])
+                    except ValueError:
+                        console.print("Usage: /ptt [seconds]")
+                        continue
+                try_ptt(sec)
+                continue
+            if cmd == "/wake":
+                try_wake_flow()
                 continue
             if cmd == "/provider":
                 if not args:
@@ -419,26 +529,7 @@ def run_cli() -> int:
             console.print(f"[red]Unknown command: {cmd}[/red]")
             continue
 
-        refresh_system_message()
-        messages.append({"role": "user", "content": raw})
-        try:
-            reply = router.generate(messages, mode=mode)
-        except ProviderError as exc:
-            console.print(f"[red]{exc}[/red]")
-            messages.pop()
-            continue
-        except AtticusError as exc:
-            console.print(f"[red]{exc}[/red]")
-            messages.pop()
-            continue
-        except Exception as exc:
-            console.print(f"[red]Unexpected error: {exc}[/red]")
-            messages.pop()
-            continue
-
-        messages.append({"role": "assistant", "content": reply})
-        _render_reply(reply)
-        voice_out.speak(reply)
+        process_chat_turn(raw)
 
 
 def main() -> None:

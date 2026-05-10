@@ -48,6 +48,12 @@ voice:
   tts_engine: pyttsx3
   tts_rate: null
   stt_engine: local
+  push_to_talk_default_seconds: 8
+  vosk_model_path: null
+  microphone_device: null
+  sample_rate_hz: 16000
+  wake_listen_seconds: 12
+  wake_command_seconds: 10
   wake_word_engine: local
   cloud_audio_allowed: false
   push_to_talk_enabled: true

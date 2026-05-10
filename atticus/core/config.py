@@ -79,6 +79,28 @@ class VoiceConfig(BaseModel):
     muted: bool = False
     tts_engine: str = "pyttsx3"
     tts_rate: int | None = None
+    # Phase 4 — local STT (Vosk + microphone)
+    stt_engine: str = "none"
+    """none | vosk | local (local is treated as vosk)."""
+    push_to_talk_default_seconds: float = 8.0
+    vosk_model_path: str | None = None
+    """Directory containing Vosk model (e.g. vosk-model-small-en-us-0.15)."""
+    microphone_device: str | None = None
+    """Optional sounddevice device name or integer index as string."""
+    sample_rate_hz: int = 16000
+    # Phase 5 — wake phrase (still local; no cloud audio)
+    wake_listen_seconds: float = 12.0
+    wake_command_seconds: float = 10.0
+    wake_phrases: list[str] = Field(
+        default_factory=lambda: [
+            "Atticus",
+            "Hey Atticus",
+            "Atticus please",
+            "Atticus, old son",
+        ]
+    )
+    wake_sensitivity: float = 0.35
+    """0=lenient substring match, 1=stricter (reserved for future scoring)."""
 
 
 class ToolsConfig(BaseModel):

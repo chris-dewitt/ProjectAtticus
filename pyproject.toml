@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "project-atticus"
-version = "0.3.0"
-description = "Local-first Windows assistant (CLI + Phase 3 offline TTS)"
+version = "0.5.0"
+description = "Local-first Windows assistant (CLI, TTS, local STT + wake)"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -21,6 +21,11 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "pytest>=8.0",
+]
+stt = [
+  "sounddevice>=0.4.6",
+  "numpy>=1.26",
+  "vosk>=0.3.45",
 ]
 
 [tool.setuptools.packages.find]

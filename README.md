@@ -94,6 +94,20 @@ Replies are spoken with **`pyttsx3`** (Windows SAPI voices) when `voice.spoken_r
 
 Optional tuning: set `voice.tts_rate` to an integer (words per minute) if your machine supports it. Set `voice.muted: true` in YAML to start sessions silent until Boss runs `/unmute`.
 
-Slash commands in the CLI: `/help`, `/exit`, `/provider`, `/mode`, `/memory`, `/remember`, `/forget`, plus Phase 2 memory and safety commands (`/memory items|prefs|summaries|audit`, `/pref`, `/recall`, `/summary add`, `/forget match|pref|summary`, natural-language remember/forget/recall), and Phase 3 **`/mute`**, **`/unmute`**, **`/voice`**. Bulk note delete (`/forget all` or substring forget) asks for confirmation; tool decisions are written to the local audit table.
+## Phase 4 — Speech in (push-to-talk, local STT)
+
+Install optional STT stack, then point **`voice.vosk_model_path`** at an unpacked Vosk model directory (see `docs/VOICE_LOCAL_AUDIO.md`):
+
+```powershell
+pip install -e ".[dev,stt]"
+```
+
+Use **`/ptt`** (or **`/listen`**) to record from the mic for a few seconds and send the transcript into the same chat path as typed text. Optional seconds: `/ptt 6`.
+
+## Phase 5 — Wake phrase (local, two clips)
+
+**`/wake`** records a **wake clip** (looks for configured `voice.wake_phrases` in the transcript), then a **command clip**. No ambient audio is streamed to the cloud. **`/voice-kill`** immediately blocks **`/ptt`** and **`/wake`**; **`/voice-arm`** restores them.
+
+Slash commands in the CLI: `/help`, `/exit`, `/provider`, `/mode`, `/memory`, `/remember`, `/forget`, plus Phase 2 memory and safety commands (`/memory items|prefs|summaries|audit`, `/pref`, `/recall`, `/summary add`, `/forget match|pref|summary`, natural-language remember/forget/recall), Phase 3 **`/mute`**, **`/unmute`**, **`/voice`**, and Phase 4–5 **`/ptt`**, **`/listen`**, **`/wake`**, **`/voice-kill`**, **`/voice-arm`**. Bulk note delete (`/forget all` or substring forget) asks for confirmation; tool decisions are written to the local audit table.
 
 Do not add real keys to `.env.example`. Keep `.env` and `config/atticus.yaml` out of git if they contain secrets or machine-specific paths.
