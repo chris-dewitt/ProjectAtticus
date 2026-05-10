@@ -34,6 +34,9 @@ desktop = [
 pdf = [
   "pypdf>=4.0",
 ]
+secrets = [
+  "keyring>=25.0",
+]
 
 [project.scripts]
 atticus-desktop = "atticus.desktop:main"

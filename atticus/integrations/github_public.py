@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import os
 from typing import Any
 
 from atticus.core.errors import WorkspaceError
+from atticus.core.secrets import get_credential
 
 
 def fetch_recent_issue_titles(owner: str, repo: str, *, limit: int = 8, token: str | None = None) -> list[str]:
@@ -35,5 +35,5 @@ def fetch_recent_issue_titles(owner: str, repo: str, *, limit: int = 8, token: s
 
 
 def github_token_from_config(token_env: str) -> str | None:
-    raw = os.environ.get(token_env, "").strip()
-    return raw or None
+    """Token from env or keyring (see ``atticus.core.secrets``)."""
+    return get_credential(token_env)

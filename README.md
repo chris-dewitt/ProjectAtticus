@@ -119,4 +119,13 @@ Slash commands in the CLI: `/help`, `/exit`, `/provider`, `/mode`, `/memory`, `/
 
 OAuth mail/calendar, deep browser automation, autostart tray, and a full GUI chat are **not** finished here; they need product decisions and secrets handling beyond this codebase pass.
 
+### Full product — one step at a time (backlog)
+
+1. **Done (this commit):** shared **`get_credential(env)`** (`atticus/core/secrets.py`) — reads **environment** first, then optional **OS keyring** when you `pip install -e ".[secrets]"` and e.g. `keyring set ProjectAtticus GITHUB_TOKEN`. GitHub CLI commands use it automatically.
+2. **Next good step:** authenticated **GitHub** beyond public issues (repos you own, PRs) using the same secret pattern — still CLI + approvals.
+3. Then: **Gmail** read-only OAuth (device or installed-app flow) + “never send without confirm”.
+4. Then: **Calendar** read, then writes behind double-confirm.
+5. Then: **Browser** helper with URL allowlist + citation capture.
+6. Then: **Tray / autostart** and richer **desktop** UI wiring into the same tool gates.
+
 Do not add real keys to `.env.example`. Keep `.env` and `config/atticus.yaml` out of git if they contain secrets or machine-specific paths.
