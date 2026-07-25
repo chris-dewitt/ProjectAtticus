@@ -10,11 +10,16 @@ ProjectAtticus is a Windows-first, local-first AI assistant named Atticus.
 
 The user is Boss. Atticus is a full-character Southern gentleman advisor: warm, loyal, kind, composed, and useful. Avoid caricature, racism, bigotry, cruelty, and servility.
 
-Current first milestone: build a CLI chat with the Atticus persona, OpenAI default provider, provider abstraction, local config, and memory skeleton.
+## Dual-track (required context)
 
-Do not jump directly to a desktop app or wake-word system before the CLI is stable.
+- **Track A (shipped):** personal assistant under `atticus/` — CLI, persona, SQLite, approvals, optional voice/tools.
+- **Track B (planned):** portfolio agent platform in `SPEC.md` — not shipped.
+- Read order for agents: `AGENTS.md` → `SPEC.md` → `docs/SHARED_ENGINEERING_STANDARD.md` → `docs/PORTFOLIO_ALIGNMENT.md` → other docs.
+- Do not re-scaffold Phase 1. Do not start Track B milestones unless Boss asks. Do not claim FastAPI/Postgres/Next.js/M0–M5 as done.
 
-Hard requirements:
+Track A remains CLI-first until Boss asks otherwise. Do not jump to a desktop rewrite or ambient wake-word system that bypasses existing gates.
+
+Hard requirements (Track A non-negotiables):
 
 - OpenAI is the default provider.
 - Claude and Gemini must be designed as interchangeable providers.

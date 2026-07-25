@@ -1,0 +1,35 @@
+# Changelog — ProjectAtticus
+
+All notable repository milestones. Dates follow merge history on `main`.
+
+## 1.0.0 — 2026-05-10
+
+Track A packaging milestone (personal assistant), not Track B M0–M5 completion.
+
+- Portable example config, `atticus` CLI entrypoint, quick start, CI
+- Authenticated GitHub CLI (`/gh me|repos|prs`) and secrets helper (env + optional keyring)
+- Phases 6–9 MVP: file workspace tools, git allowlist, GitHub/open, integration stubs, Textual desk
+
+## 0.5.0 — 2026-05-10
+
+- Phase 4–5: push-to-talk + Vosk STT, two-clip wake flow, voice kill switch, privacy docs
+
+## 0.4.0 — 2026-05-10
+
+- Phase 3: pyttsx3 TTS, mute/unmute, voice status, Markdown strip for speech, tests
+
+## 0.3.0 — 2026-05-09
+
+- Phase 2: preferences, summaries, audit log, approvals, natural-language memory commands
+
+## 0.2.0 — 2026-05-09
+
+- Phase 1 CLI: providers, config, SQLite memory, slash commands, tests
+
+## 0.1.0 — 2026-05-09
+
+- Instruction pack at repo root (rules, docs, prompts, config)
+
+## Unreleased documentation
+
+- Dual-track reconciliation: `SPEC.md`, `docs/SHARED_ENGINEERING_STANDARD.md`, `docs/PORTFOLIO_ALIGNMENT.md`, evaluation/model/data cards, ADR-009

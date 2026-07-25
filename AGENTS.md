@@ -2,6 +2,23 @@
 
 These instructions apply to all coding agents working in this repository, including Codex, Cursor, and similar agentic coding tools.
 
+## Required reading order
+
+1. `AGENTS.md` (this file)
+2. `SPEC.md` (Track B portfolio architecture north star)
+3. `docs/SHARED_ENGINEERING_STANDARD.md` (portfolio engineering bar)
+4. `docs/PORTFOLIO_ALIGNMENT.md` (honest Track A vs Track B map)
+5. Existing product docs (`docs/PRD.md`, `docs/ARCHITECTURE.md`, `docs/SECURITY.md`, `docs/ROADMAP.md`, `docs/PERSONA.md`, and nearby implementation files)
+
+## Dual-track rules
+
+- **Track A (shipped):** Windows personal assistant under `atticus/` — CLI, persona, SQLite memory, permission gates, optional voice, opt-in tools. This is the working product.
+- **Track B (planned):** Agent platform in `SPEC.md` — orchestrator, policy engine, API/traces/evals. Not shipped.
+- Do **not** re-scaffold Phase 1 CLI; it already exists.
+- Do **not** build Track B milestones (M0–M5) unless Boss explicitly asks for that milestone.
+- When extending tools or approvals, prefer SPEC-shaped boundaries: typed tools, audit events, no silent external writes, treat retrieved content as untrusted.
+- Stack defaults in the shared standard (FastAPI, Postgres, Next.js, Docker, OTel, Azure) are aspirational until an ADR adopts them (see ADR-009).
+
 ## Project mission
 
 ProjectAtticus is a Windows-first, local-first personal AI assistant named Atticus. Atticus lives on the user's laptop, responds to "Atticus," "Hey Atticus," and close variants, speaks aloud by default, and can use OpenAI, Claude, or Gemini as an interchangeable LLM brain.
@@ -268,7 +285,8 @@ The repo must include:
 - `.env.example`
 - `README.md`
 - `AGENTS.md`
-- `docs/`
+- `SPEC.md`
+- `docs/` (including `PORTFOLIO_ALIGNMENT.md`, `SHARED_ENGINEERING_STANDARD.md`)
 - `.cursor/rules/`
 
 Before completing a task, the coding agent should report:
@@ -279,17 +297,10 @@ Before completing a task, the coding agent should report:
 4. Security/privacy impact.
 5. Suggested next task.
 
-## First implementation task
+## Current implementation status (do not greenfield)
 
-The first code-building agent should implement only:
+Track A Phase 1–6 foundations are already implemented in `atticus/` (CLI, config, persona, OpenAI provider, Claude/Gemini stubs, SQLite memory, approvals, optional voice, file/git/GitHub MVP tools). See `README.md` and `docs/PORTFOLIO_ALIGNMENT.md`.
 
-- Python project scaffold.
-- CLI chat loop.
-- Atticus persona loading.
-- OpenAI provider implementation.
-- Stub Claude/Gemini providers.
-- Config loading from `.env` and `config/atticus.yaml`.
-- Local SQLite memory skeleton.
-- Tests for config, provider selection, and memory.
+New agents should extend the existing package. Typical next Track A work includes real Anthropic/Gemini providers, Gmail/Calendar OAuth behind confirmations, deeper coding tools, or desktop wiring — only when requested.
 
-Do not implement wake word, email sending, shell execution, or calendar integration in the first task.
+Track B work starts only when Boss asks for a specific SPEC milestone (usually M0). Do not invent a parallel `src/` tree or claim M0–M5 complete.
