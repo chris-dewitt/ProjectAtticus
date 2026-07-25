@@ -35,13 +35,17 @@ def calendar_deps_installed() -> bool:
 
 
 def status_text(*, client_secrets: Path | None, token_path: Path, deps_ok: bool) -> str:
+    deps_note = "yes" if deps_ok else 'no (pip install -e ".[gmail]")'
+    secrets_note = str(client_secrets) if client_secrets else "(not configured)"
+    secrets_present = "yes" if client_secrets and client_secrets.is_file() else "no"
+    token_present = "yes" if token_path.is_file() else "no"
     return "\n".join(
         [
-            f"calendar deps installed: {'yes' if deps_ok else 'no (pip install -e \".[gmail]\")'}",
-            f"client secrets: {client_secrets if client_secrets else '(not configured)'}",
-            f"client secrets present: {'yes' if client_secrets and client_secrets.is_file() else 'no'}",
+            f"calendar deps installed: {deps_note}",
+            f"client secrets: {secrets_note}",
+            f"client secrets present: {secrets_present}",
             f"token cache: {token_path}",
-            f"token present: {'yes' if token_path.is_file() else 'no'}",
+            f"token present: {token_present}",
             "Writes require double confirmation (y/N + CREATE/DELETE token).",
         ]
     )

@@ -63,3 +63,20 @@ Decision: spoken responses are a near-term goal, but CLI text chat ships first.
 Reason: older Windows laptop and audio dependencies introduce risk.
 
 Implication: voice layer must be optional and failure-tolerant.
+
+## ADR-009 — Dual-track product and portfolio architecture
+
+Decision: maintain two coordinated tracks in one repository.
+
+- **Track A (current product):** Windows-first personal assistant UX — Rich CLI, Boss/persona, SQLite memory, permission gates, optional voice, opt-in tools under `atticus/`. This is what ships and what package version `1.0.0` refers to.
+- **Track B (portfolio north star):** Secure local-first agent platform described in root `SPEC.md` — bounded orchestrator, policy engine, API/traces/evals, EvalForge hooks, signature research→GitHub-issue demo.
+
+Reason: the portfolio flagship needs auditable agent-platform architecture, while Boss still needs a working local assistant. Erasing either narrative would misrepresent status or throw away a working foundation.
+
+Implications:
+
+1. Track A privacy, approval, persona, and Windows-first rules remain non-negotiable for anything that already runs.
+2. `docs/SHARED_ENGINEERING_STANDARD.md` stack defaults (FastAPI, Postgres, Next.js, Docker, OTel, Azure) are aspirational until a later ADR adopts each piece.
+3. Current layout (`atticus/`, `docs/`, `prompts/`) stays until an explicit migration ADR; do not silently move to `src/`.
+4. Agents must read `docs/PORTFOLIO_ALIGNMENT.md` before claiming milestone completion.
+5. Do not present Track B M0–M5 as shipped.
