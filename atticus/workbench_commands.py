@@ -8,13 +8,12 @@ from pathlib import Path
 
 from rich.console import Console
 
-from atticus.core.approvals import ConsoleYesNoSource, request_tool_approval
+from atticus.core.approvals import ConsoleYesNoSource, confirm_exact_token, request_tool_approval
 from atticus.core.config import AppConfig
 from atticus.core.errors import AtticusError, PermissionDenied, WorkspaceError
 from atticus.core.permissions import PermissionClass
 from atticus.core.router import ProviderRouter
 from atticus.core.tool_request import ToolCallRequest
-from atticus.core.approvals import confirm_exact_token
 from atticus.integrations import deferred
 from atticus.integrations import gmail as gmail_api
 from atticus.integrations import github_public as gh_api
