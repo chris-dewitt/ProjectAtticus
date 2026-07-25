@@ -2,44 +2,58 @@
 
 ## What we are building
 
-A Windows-first, local-first personal assistant named Atticus. He is a full-character Southern gentleman advisor who responds to Boss, uses OpenAI by default, supports Claude/Gemini later, remembers summaries/preferences, and eventually speaks/listens through local voice components.
+**Track A (shipped):** A Windows-first, local-first personal assistant named Atticus. He is a full-character Southern gentleman advisor who responds to Boss, uses OpenAI by default, supports Claude/Gemini later, remembers summaries/preferences, speaks/listens through optional local voice components, and runs permissioned local tools when enabled.
+
+**Track B (planned):** A secure local-first agent platform (policy, bounded runs, traces, evals) defined in root `SPEC.md`. Not shipped. See `docs/PORTFOLIO_ALIGNMENT.md`.
+
+## Required reading order
+
+1. `AGENTS.md`
+2. `SPEC.md`
+3. `docs/SHARED_ENGINEERING_STANDARD.md`
+4. `docs/PORTFOLIO_ALIGNMENT.md`
+5. Existing architecture, security, evaluation, persona, and implementation files under `docs/` and `atticus/`
 
 ## What matters most
 
 1. Privacy.
 2. Modularity.
-3. Working CLI foundation.
+3. Working CLI foundation (already present — extend it).
 4. Provider abstraction.
-5. Atticus persona.
-6. Permission-gated actions.
+5. Atticus persona (Track A).
+6. Permission-gated actions and auditability.
 7. Tests.
+8. Honest status language (do not claim Track B milestones as done).
 
 ## What not to do first
 
 Do not start with:
 
-- a complex desktop UI;
-- wake-word implementation;
-- shell command execution;
+- re-scaffolding Phase 1 as if the repo were empty;
+- a Track B FastAPI/Postgres/Next.js rewrite unless Boss asks for that milestone;
+- a complex desktop UI or tray app;
+- ambient always-listening wake word beyond the existing two-clip flow;
+- unrestricted shell execution;
 - Gmail sending;
 - calendar write access;
 - unrestricted file access;
-- raw transcript storage.
+- raw transcript storage;
+- silent model/provider fallback.
 
-## Best first PR
+## Best next work (choose by request)
 
-Implement Phase 1 CLI:
+Track A extensions (typical):
 
-- package scaffold;
-- config;
-- persona;
-- provider base;
-- OpenAI provider;
-- Claude/Gemini stubs;
-- memory skeleton;
-- slash commands;
-- tests;
-- Windows setup docs.
+- real Anthropic/Gemini providers + route keys through `get_credential`;
+- Gmail read-only OAuth with confirm-before-send;
+- auto conversation summarizer;
+- Phase 7 deepen: patch proposal + approved apply;
+- richer desktop wiring into the same gates.
+
+Track B (only if Boss names a milestone):
+
+- smallest M0 vertical slice with tests, docs, and ADR notes;
+- evolve existing seams in `atticus/` rather than inventing a parallel tree.
 
 ## Completion report format
 
@@ -59,6 +73,9 @@ Security/privacy notes:
 - ...
 
 Known limitations:
+- ...
+
+Track impact (A/B):
 - ...
 
 Recommended next step:

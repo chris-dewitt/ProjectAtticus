@@ -1,12 +1,19 @@
 # Architecture — ProjectAtticus
 
+## Dual-track view
+
+- **Current implementation (Track A):** modular local CLI assistant under `atticus/` — Rich interface, orchestration helpers, OpenAI provider, SQLite memory, permission-gated tools, optional voice/desktop. This section below describes that shape.
+- **Target platform (Track B):** bounded orchestrator, policy engine, typed API, traces/replay, and evaluation hooks described in root [`SPEC.md`](../SPEC.md). See [`PORTFOLIO_ALIGNMENT.md`](PORTFOLIO_ALIGNMENT.md) for what is shipped vs planned.
+
+Do not assume FastAPI, Postgres, Next.js, or a `src/` layout exist in the tree today.
+
 ## Architectural thesis
 
 Atticus should be built as a modular local application with a thin orchestration core, swappable model providers, local memory, permission-gated tools, and optional voice/desktop layers.
 
 The assistant should never be one giant script. The core must be simple enough to run on an older Windows laptop and structured enough that Codex/Cursor agents can safely extend it.
 
-## Recommended v1 shape
+## Current implementation shape (Track A)
 
 ```text
 ProjectAtticus/
@@ -60,18 +67,30 @@ ProjectAtticus/
   README.md
 ```
 
-## Layers
+## Target platform shape (Track B)
+
+See `SPEC.md` for the full platform diagram and components:
+
+- typed API and identity boundary
+- application workflow / state machine with persisted checkpoints
+- domain services, AI adapters, policy/eval
+- Postgres/artifacts, model providers, traces/metrics
+- tool gateway with schema validation, timeouts, idempotency
+- evaluation adapter for EvalForge
+
+Track B must keep domain logic independent of web frameworks and provider SDKs. Adopt stack pieces via ADRs; do not silently replace Track A.
+
+## Layers (Track A today)
 
 ### 1. Interface layer
 
-Initial interface: CLI.
+Primary interface: CLI (`atticus/app.py`).
 
-Future interfaces:
+Companion / future interfaces:
 
-- voice loop;
-- local desktop UI;
-- system tray;
-- optional local browser UI.
+- optional voice loop (PTT/wake);
+- thin Textual desk;
+- future system tray / richer UI (Track A phase 9 / Track B web UI).
 
 Interface layer responsibilities:
 
