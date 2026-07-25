@@ -129,21 +129,22 @@ Slash commands in the CLI: `/help`, `/exit`, `/provider` (`openai` | `anthropic`
 ## Phases 6–9 (tools, integrations, desk) — MVP in this repo
 
 - **Phase 6 — Local files:** with `tools.enabled` and `tools.files.enabled`, use **`/file read`**, **`/file search`**, **`/file write`**, **`/code-search`**, **`/summarize`** (paths must stay under `tools.approved_paths`). Writes and cloud-bound summarizes go through the same **y/N approval + audit** pattern as earlier phases. Optional PDF text: `pip install -e ".[pdf]"`.
-- **Phase 7 — Coding / git:** with `tools.shell.enabled`, **`/git …`** runs a **small allow-listed** set of read-only git commands (`git status`, `git diff`, `git branch --show-current`, `git log -1 --oneline`, and `git diff --stat -- …`). No arbitrary shell.
-- **Phase 8 — Integrations:** **`/gh`** (`me`/`repos`/`prs`/`issues`), **`/open`**, and **`/gmail`** (`status`/`auth`/`inbox`/`read`/`draft`/`send` with confirm-before-send). Calendar/browser automation remain stubs via **`/integrations`**. Gmail needs `pip install -e ".[gmail]"` plus OAuth client secrets path in config (see `docs/API_KEYS_SETUP.md`).
-- **Phase 9 — Desk:** optional Textual hub — install **`pip install -e ".[desktop]"`** then run **`atticus-desktop`** (or `python -m atticus.desktop`). It is a companion window; full chat stays **`python -m atticus`**.
+- **Phase 7 — Coding / git:** with `tools.shell.enabled`, **`/git …`** (read-only allow-list), **`/patch plan|apply <diff>`** (unified diff under `approved_paths`), and **`/test <pytest …>`** (allow-listed pytest only). No arbitrary shell.
+- **Phase 8 — Integrations:** **`/gh`**, **`/gmail`**, **`/cal`** (Calendar read/write with double-confirm), **`/open`**, **`/browse`** + **`/citations`** (fetch + local citation JSON; optional host allowlist). Google APIs: `pip install -e ".[gmail]"` + OAuth client JSON (see `docs/API_KEYS_SETUP.md`).
+- **Phase 9 — Desk:** optional Textual hub — install **`pip install -e ".[desktop]"`** then run **`atticus-desktop`**. Companion window only; full chat stays **`python -m atticus`**.
 
-Deep browser automation, autostart tray, and a full GUI chat are **not** finished here.
+JS-heavy browser automation, autostart tray, and a full GUI chat are **not** finished here.
 
 ### Full product — one step at a time (backlog)
 
 1. **Done:** shared **`get_credential(env)`** — env first, optional **keyring**; OpenAI/Anthropic/Gemini all use it.
 2. **Done:** authenticated GitHub CLI — **`/gh me|repos|prs|issues`**.
-3. **Done:** Claude + Gemini provider implementations (`pip install -e ".[providers]"`, then `/provider anthropic|gemini`).
-4. **Done:** local auto conversation summarizer (`/summary session`, auto on cadence/exit; no raw transcripts).
-5. **Done:** Gmail read OAuth + draft/send with high-friction confirm (`/gmail …`).
-6. **Next good step:** **Calendar** read, then writes behind double-confirm.
-7. Then: **Browser** helper with URL allowlist + citation capture.
-8. Then: **Tray / autostart** and richer **desktop** UI wiring into the same tool gates.
+3. **Done:** Claude + Gemini provider implementations (`pip install -e ".[providers]"`).
+4. **Done:** local auto conversation summarizer (`/summary session`, auto on cadence/exit).
+5. **Done:** Gmail OAuth + confirm-before-send (`/gmail …`).
+6. **Done:** Calendar read + double-confirm writes (`/cal …`).
+7. **Done:** Browser fetch helper + citation capture (`/browse`, `/citations`).
+8. **Done:** Phase 7 deepen — patch plan/apply + gated pytest (`/patch`, `/test`).
+9. **Next good step:** **Tray / autostart** and richer **desktop** UI wiring into the same tool gates.
 
 Do not add real keys to `.env.example`. Keep `.env` and `config/atticus.yaml` out of git if they contain secrets or machine-specific paths.

@@ -114,6 +114,9 @@ class ToolsShellConfig(BaseModel):
     model_config = ConfigDict(extra="ignore")
     enabled: bool = False
     require_confirmation: bool = True
+    allow_patch_apply: bool = True
+    allow_test_commands: bool = True
+    test_timeout_seconds: int = 120
 
 
 class ToolsFilesConfig(BaseModel):
@@ -128,6 +131,11 @@ class ToolsBrowserConfig(BaseModel):
     model_config = ConfigDict(extra="ignore")
     enabled: bool = False
     require_confirmation: bool = True
+    allowed_hosts: list[str] = Field(default_factory=list)
+    """Empty = any non-local http(s) host after approval; non-empty = host allowlist."""
+    max_response_bytes: int = 500_000
+    citation_dir: str = "data/citations"
+    user_agent: str = "ProjectAtticus/1.0 (+local; Boss-approved fetch)"
 
 
 class ToolsEmailConfig(BaseModel):
@@ -155,6 +163,18 @@ class ToolsCalendarConfig(BaseModel):
     model_config = ConfigDict(extra="ignore")
     enabled: bool = False
     require_confirmation_for_write: bool = True
+    client_secrets_path: str | None = None
+    """OAuth desktop client JSON; falls back to tools.email.gmail_client_secrets_path when null."""
+    token_path: str = "data/calendar_token.json"
+    calendar_id: str = "primary"
+    list_days: int = 7
+    max_events: int = 20
+    scopes_readonly: list[str] = Field(
+        default_factory=lambda: ["https://www.googleapis.com/auth/calendar.readonly"]
+    )
+    scopes_write: list[str] = Field(
+        default_factory=lambda: ["https://www.googleapis.com/auth/calendar.events"]
+    )
 
 
 class ToolsGitHubConfig(BaseModel):

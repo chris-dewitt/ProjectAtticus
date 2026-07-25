@@ -75,6 +75,9 @@ tools:
   shell:
     enabled: false
     require_confirmation: true
+    allow_patch_apply: true
+    allow_test_commands: true
+    test_timeout_seconds: 120
   files:
     enabled: false
     require_confirmation_for_edits: true
@@ -88,5 +91,16 @@ tools:
   calendar:
     enabled: false
     require_confirmation_for_write: true
+    # Reuses Gmail client secrets when null:
+    client_secrets_path: null
+    token_path: "data/calendar_token.json"
+    calendar_id: "primary"
+    list_days: 7
+    max_events: 20
   browser:
     enabled: false
+    require_confirmation: true
+    # Empty allowlist = any non-local http(s) host after approval:
+    allowed_hosts: []
+    max_response_bytes: 500000
+    citation_dir: "data/citations"

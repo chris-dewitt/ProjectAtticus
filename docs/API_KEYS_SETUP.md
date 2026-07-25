@@ -106,18 +106,22 @@ ANTHROPIC_API_KEY=
 GEMINI_API_KEY=
 ```
 
-## Gmail OAuth (not an API key in `.env`)
+## Google OAuth (Gmail + Calendar; not an API key in `.env`)
 
-Gmail uses a Google Cloud **OAuth Desktop** client secrets JSON plus a local token cache:
+Gmail and Calendar share the Google API optional extra and can share one OAuth Desktop client JSON:
 
 1. `pip install -e ".[gmail]"`
-2. Create an OAuth client (Desktop) in Google Cloud Console; enable Gmail API.
+2. Create an OAuth client (Desktop) in Google Cloud Console; enable **Gmail API** and/or **Google Calendar API**.
 3. Download the client secrets JSON somewhere outside git (or a gitignored path).
-4. Set `tools.enabled: true`, `tools.email.enabled: true`, and `tools.email.gmail_client_secrets_path` in `config/atticus.yaml`.
-5. Run `atticus`, then `/gmail auth readonly` (or `compose` for drafts/send).
-6. Token caches at `tools.email.gmail_token_path` (default `data/gmail_token.json`, gitignored).
+4. Set `tools.enabled: true` and the relevant tool flags in `config/atticus.yaml`:
+   - Gmail: `tools.email.enabled` + `tools.email.gmail_client_secrets_path`
+   - Calendar: `tools.calendar.enabled` + `tools.calendar.client_secrets_path` (or leave null to reuse the Gmail secrets path)
+5. Run `atticus`, then:
+   - `/gmail auth readonly` (or `compose` for drafts/send)
+   - `/cal auth readonly` (or `write` for create/delete)
+6. Tokens cache under `data/` by default (`gmail_token.json`, `calendar_token.json`) — gitignored.
 
-Send always requires y/N approval plus typing `SEND`. Never commit client secrets or tokens.
+Gmail send requires y/N plus typing `SEND`. Calendar create/delete require y/N plus typing `CREATE` / `DELETE`. Never commit client secrets or tokens.
 
 ## Provider billing warning
 

@@ -12,7 +12,14 @@ from email.message import EmailMessage
 from pathlib import Path
 from typing import Any, Sequence
 
-from atticus.core.errors import AtticusError, ConfigurationError
+from atticus.core.errors import AtticusError
+from atticus.integrations.google_oauth import (
+    build_service as google_build_service,
+    google_api_deps_installed,
+    load_credentials as google_load_credentials,
+    require_google_api_deps,
+    resolve_path,
+)
 
 
 class GmailError(AtticusError):
@@ -30,29 +37,14 @@ class GmailHeader:
 
 
 def gmail_deps_installed() -> bool:
-    try:
-        import google.auth  # noqa: F401
-        import google_auth_oauthlib.flow  # noqa: F401
-        import googleapiclient.discovery  # noqa: F401
-    except ImportError:
-        return False
-    return True
+    return google_api_deps_installed()
 
 
 def _require_deps() -> None:
-    if not gmail_deps_installed():
-        raise GmailError('Gmail dependencies missing. Install with: pip install -e ".[gmail]"')
-
-
-def resolve_path(raw: str | None, *, cwd: Path | None = None) -> Path | None:
-    if not raw or not str(raw).strip():
-        return None
-    p = Path(raw).expanduser()
-    if not p.is_absolute():
-        p = ((cwd or Path.cwd()) / p).resolve()
-    else:
-        p = p.resolve()
-    return p
+    try:
+        require_google_api_deps(feature="Gmail")
+    except AtticusError as exc:
+        raise GmailError(str(exc)) from exc
 
 
 def load_credentials(
@@ -63,41 +55,17 @@ def load_credentials(
 ) -> Any:
     """Load cached credentials or run local OAuth browser flow."""
     _require_deps()
-    from google.auth.transport.requests import Request
-    from google.oauth2.credentials import Credentials
-    from google_auth_oauthlib.flow import InstalledAppFlow
-
-    if not client_secrets.is_file():
-        raise ConfigurationError(
-            f"Gmail client secrets not found at {client_secrets}. "
-            "Download an OAuth Desktop client JSON from Google Cloud Console "
-            "and set tools.email.gmail_client_secrets_path."
-        )
-
-    creds: Credentials | None = None
-    if token_path.is_file():
-        creds = Credentials.from_authorized_user_file(str(token_path), list(scopes))
-
-    if creds and creds.valid:
-        return creds
-
-    if creds and creds.expired and creds.refresh_token:
-        creds.refresh(Request())
-    else:
-        flow = InstalledAppFlow.from_client_secrets_file(str(client_secrets), list(scopes))
-        # Local redirect; opens browser on the machine Atticus is running on.
-        creds = flow.run_local_server(port=0)
-
-    token_path.parent.mkdir(parents=True, exist_ok=True)
-    token_path.write_text(creds.to_json(), encoding="utf-8")
-    return creds
+    return google_load_credentials(
+        client_secrets=client_secrets,
+        token_path=token_path,
+        scopes=scopes,
+        feature="Gmail",
+    )
 
 
 def build_service(creds: Any) -> Any:
     _require_deps()
-    from googleapiclient.discovery import build
-
-    return build("gmail", "v1", credentials=creds, cache_discovery=False)
+    return google_build_service("gmail", "v1", creds)
 
 
 def _header_map(payload_headers: list[dict[str, str]] | None) -> dict[str, str]:
