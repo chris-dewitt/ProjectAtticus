@@ -14,12 +14,16 @@ from atticus.core.errors import AtticusError, PermissionDenied, WorkspaceError
 from atticus.core.permissions import PermissionClass
 from atticus.core.router import ProviderRouter
 from atticus.core.tool_request import ToolCallRequest
+from atticus.core.approvals import confirm_exact_token
 from atticus.integrations import deferred
+from atticus.integrations import gmail as gmail_api
 from atticus.integrations import github_public as gh_api
 from atticus.memory.store import MemoryStore
 from atticus.services.git_runner import run_git
 from atticus.services.paths import approved_roots, resolve_under_approved
 from atticus.services import workspace_files as wf
+
+_GMAIL_SEND_TOKEN = "SEND"
 
 
 @dataclass
@@ -54,6 +58,27 @@ def _ensure_browser(ctx: ToolCliContext) -> None:
         raise WorkspaceError("Enable tools.enabled and tools.browser.enabled to open URLs from Atticus.")
 
 
+def _ensure_email(ctx: ToolCliContext) -> None:
+    if not ctx.cfg.tools.enabled or not ctx.cfg.tools.email.enabled:
+        raise WorkspaceError("Enable tools.enabled and tools.email.enabled for Gmail commands.")
+
+
+def _gmail_paths(ctx: ToolCliContext) -> tuple[Path | None, Path]:
+    secrets = gmail_api.resolve_path(ctx.cfg.tools.email.gmail_client_secrets_path)
+    token = gmail_api.resolve_path(ctx.cfg.tools.email.gmail_token_path) or Path("data/gmail_token.json").resolve()
+    return secrets, token
+
+
+def _gmail_service(ctx: ToolCliContext, *, scopes: list[str]):
+    secrets, token = _gmail_paths(ctx)
+    if secrets is None:
+        raise WorkspaceError(
+            "Set tools.email.gmail_client_secrets_path to your Google OAuth Desktop client JSON."
+        )
+    creds = gmail_api.load_credentials(client_secrets=secrets, token_path=token, scopes=scopes)
+    return gmail_api.build_service(creds)
+
+
 def handle_tool_slash(cmd: str, args: list[str], ctx: ToolCliContext) -> bool:
     """Return True if this module handled the slash command."""
     try:
@@ -61,6 +86,164 @@ def handle_tool_slash(cmd: str, args: list[str], ctx: ToolCliContext) -> bool:
             ctx.console.print(deferred.gmail_status())
             ctx.console.print(deferred.calendar_status())
             ctx.console.print(deferred.browser_status())
+            return True
+
+        if cmd == "/gmail":
+            _ensure_email(ctx)
+            if not args:
+                ctx.console.print(
+                    "Usage: /gmail status | auth [readonly|compose] | inbox [n] | "
+                    "read <id> | draft <to> <subject> || <body> | send <draft_id>"
+                )
+                return True
+            sub = args[0].lower()
+            secrets, token = _gmail_paths(ctx)
+
+            if sub == "status":
+                ctx.console.print(
+                    gmail_api.status_text(
+                        client_secrets=secrets,
+                        token_path=token,
+                        deps_ok=gmail_api.gmail_deps_installed(),
+                    )
+                )
+                return True
+
+            if sub == "auth":
+                mode = args[1].lower() if len(args) >= 2 else "readonly"
+                if mode not in {"readonly", "compose"}:
+                    ctx.console.print("Usage: /gmail auth [readonly|compose]")
+                    return True
+                scopes = (
+                    list(ctx.cfg.tools.email.gmail_scopes_readonly)
+                    if mode == "readonly"
+                    else list(ctx.cfg.tools.email.gmail_scopes_compose)
+                )
+                req = ToolCallRequest(
+                    tool_name="gmail_auth",
+                    permission_class=PermissionClass.EXTERNAL_SEND,
+                    action_summary=(
+                        f"Run Google OAuth ({mode}) in the local browser and cache a token at {token}. "
+                        "No email content is sent to Atticus cloud providers in this step."
+                    ),
+                    external_data=True,
+                )
+                if not request_tool_approval(ctx.yesno, ctx.memory, req):
+                    ctx.console.print("[dim]Gmail auth cancelled.[/dim]")
+                    return True
+                _gmail_service(ctx, scopes=scopes)
+                ctx.console.print(f"[green]Gmail authenticated[/green] ({mode}). Token cached locally.")
+                return True
+
+            if sub == "inbox":
+                limit = int(ctx.cfg.tools.email.gmail_inbox_limit)
+                if len(args) >= 2:
+                    try:
+                        limit = int(args[1])
+                    except ValueError:
+                        ctx.console.print("Usage: /gmail inbox [n]")
+                        return True
+                req = ToolCallRequest(
+                    tool_name="gmail_inbox",
+                    permission_class=PermissionClass.SENSITIVE_READ,
+                    action_summary=f"Read up to {limit} Gmail INBOX message headers/snippets via Google API.",
+                )
+                if not request_tool_approval(ctx.yesno, ctx.memory, req):
+                    ctx.console.print("[dim]Inbox cancelled.[/dim]")
+                    return True
+                service = _gmail_service(ctx, scopes=list(ctx.cfg.tools.email.gmail_scopes_readonly))
+                rows = gmail_api.list_inbox(service, limit=limit)
+                if not rows:
+                    ctx.console.print("Inbox is empty (or no messages returned).")
+                    return True
+                for row in rows:
+                    ctx.console.print(
+                        f"[bold]{row.id}[/bold] | {row.date} | {row.from_addr}\n"
+                        f"  {row.subject}\n"
+                        f"  {row.snippet}"
+                    )
+                return True
+
+            if sub == "read" and len(args) >= 2:
+                mid = args[1]
+                req = ToolCallRequest(
+                    tool_name="gmail_read",
+                    permission_class=PermissionClass.SENSITIVE_READ,
+                    action_summary=f"Fetch Gmail message body for id {mid} (local display only).",
+                )
+                if not request_tool_approval(ctx.yesno, ctx.memory, req):
+                    ctx.console.print("[dim]Read cancelled.[/dim]")
+                    return True
+                service = _gmail_service(ctx, scopes=list(ctx.cfg.tools.email.gmail_scopes_readonly))
+                header, body = gmail_api.read_message(service, mid)
+                ctx.console.print(
+                    f"[bold]{header.subject}[/bold]\nFrom: {header.from_addr}\nDate: {header.date}\n\n{body}"
+                )
+                return True
+
+            if sub == "draft" and len(args) >= 2:
+                joined = " ".join(args[1:]).strip()
+                if "||" not in joined:
+                    ctx.console.print(
+                        "Usage: /gmail draft <to> <subject> || <body>\n"
+                        "Example: /gmail draft boss@example.com Quick hello || Just checking in."
+                    )
+                    return True
+                head, body = joined.split("||", 1)
+                head_parts = head.strip().split(None, 1)
+                if len(head_parts) < 2:
+                    ctx.console.print("Draft needs <to> and <subject> before ||.")
+                    return True
+                to_addr, subject = head_parts[0], head_parts[1].strip()
+                body_text = body.strip()
+                req = ToolCallRequest(
+                    tool_name="gmail_draft",
+                    permission_class=PermissionClass.WRITE,
+                    action_summary=(
+                        f"Create a Gmail draft to {to_addr!r} subject {subject!r} "
+                        f"({len(body_text)} chars). Does not send."
+                    ),
+                )
+                if not request_tool_approval(ctx.yesno, ctx.memory, req):
+                    ctx.console.print("[dim]Draft cancelled.[/dim]")
+                    return True
+                service = _gmail_service(ctx, scopes=list(ctx.cfg.tools.email.gmail_scopes_compose))
+                draft_id = gmail_api.create_draft(service, to=to_addr, subject=subject, body=body_text)
+                ctx.console.print(f"[green]Draft created[/green] id=[bold]{draft_id}[/bold]. Use /gmail send {draft_id}")
+                return True
+
+            if sub == "send" and len(args) >= 2:
+                draft_id = args[1]
+                if not ctx.cfg.tools.email.require_confirmation_for_send:
+                    raise WorkspaceError(
+                        "Refusing to send: tools.email.require_confirmation_for_send must remain true."
+                    )
+                req = ToolCallRequest(
+                    tool_name="gmail_send",
+                    permission_class=PermissionClass.EXTERNAL_SEND,
+                    action_summary=f"SEND Gmail draft {draft_id} to the recipient (irreversible).",
+                    external_data=True,
+                    destructive=True,
+                )
+                if not request_tool_approval(ctx.yesno, ctx.memory, req):
+                    ctx.console.print("[dim]Send cancelled.[/dim]")
+                    return True
+                if not confirm_exact_token(
+                    ctx.yesno,
+                    "Type SEND in capitals to confirm the message leaves your account: ",
+                    _GMAIL_SEND_TOKEN,
+                ):
+                    ctx.console.print("[dim]Send cancelled (token mismatch).[/dim]")
+                    return True
+                service = _gmail_service(ctx, scopes=list(ctx.cfg.tools.email.gmail_scopes_compose))
+                sent_id = gmail_api.send_draft(service, draft_id)
+                ctx.console.print(f"[green]Sent[/green] message id=[bold]{sent_id}[/bold].")
+                return True
+
+            ctx.console.print(
+                "Usage: /gmail status | auth [readonly|compose] | inbox [n] | "
+                "read <id> | draft <to> <subject> || <body> | send <draft_id>"
+            )
             return True
 
         if cmd == "/file" and args:

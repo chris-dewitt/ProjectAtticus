@@ -40,6 +40,9 @@ memory:
   backend: sqlite
   sqlite_path: "data/atticus_memory.sqlite3"
   allow_forget: true
+  auto_summarize: true
+  auto_summarize_every_n_turns: 6
+  summary_max_chars: 900
 
 voice:
   spoken_responses: false
@@ -78,6 +81,10 @@ tools:
   email:
     enabled: false
     require_confirmation_for_send: true
+    # Google Cloud OAuth desktop client secrets JSON (never commit real credentials):
+    gmail_client_secrets_path: null
+    gmail_token_path: "data/gmail_token.json"
+    gmail_inbox_limit: 10
   calendar:
     enabled: false
     require_confirmation_for_write: true

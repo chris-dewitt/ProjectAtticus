@@ -1,10 +1,11 @@
-"""Phase 8 placeholders — OAuth and provider APIs are not wired in this build."""
+"""Phase 8 placeholders — remaining OAuth surfaces beyond Gmail MVP."""
 
 
 def gmail_status() -> str:
     return (
-        "Gmail integration is not configured yet. Planned: OAuth to Google, draft-only send flow, "
-        "and explicit Boss confirmation before any message leaves the machine."
+        "Gmail: use /gmail status|auth|inbox|read|draft|send when tools.enabled and "
+        "tools.email.enabled are true (optional pip install -e \".[gmail]\"). "
+        "Send always requires explicit confirmation."
     )
 
 

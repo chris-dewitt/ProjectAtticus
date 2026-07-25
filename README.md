@@ -50,7 +50,7 @@ If you prefer not to use the installed script: `python -m atticus`.
 
 5. **Verify (optional):** `pytest` — tests do not call paid APIs.
 
-6. **Optional extras:** `pip install -e ".[stt]"` for local microphone + Vosk, `pip install -e ".[desktop]"` for `atticus-desktop`, `pip install -e ".[secrets]"` for OS keyring-backed tokens.
+6. **Optional extras:** `pip install -e ".[providers]"` for Claude/Gemini SDKs, `pip install -e ".[gmail]"` for Gmail OAuth, `pip install -e ".[stt]"` for local microphone + Vosk, `pip install -e ".[desktop]"` for `atticus-desktop`, `pip install -e ".[secrets]"` for OS keyring-backed tokens.
 
 ## Repo target path
 
@@ -124,24 +124,26 @@ Use **`/ptt`** (or **`/listen`**) to record from the mic for a few seconds and s
 
 **`/wake`** records a **wake clip** (looks for configured `voice.wake_phrases` in the transcript), then a **command clip**. No ambient audio is streamed to the cloud. **`/voice-kill`** immediately blocks **`/ptt`** and **`/wake`**; **`/voice-arm`** restores them.
 
-Slash commands in the CLI: `/help`, `/exit`, `/provider`, `/mode`, `/memory`, `/remember`, `/forget`, plus Phase 2 memory and safety commands (`/memory items|prefs|summaries|audit`, `/pref`, `/recall`, `/summary add`, `/forget match|pref|summary`, natural-language remember/forget/recall), Phase 3 **`/mute`**, **`/unmute`**, **`/voice`**, and Phase 4–5 **`/ptt`**, **`/listen`**, **`/wake`**, **`/voice-kill`**, **`/voice-arm`**. Bulk note delete (`/forget all` or substring forget) asks for confirmation; tool decisions are written to the local audit table.
+Slash commands in the CLI: `/help`, `/exit`, `/provider` (`openai` | `anthropic` | `gemini`), `/mode`, `/memory`, `/remember`, `/forget`, Phase 2 memory commands (`/memory items|prefs|summaries|audit`, `/pref`, `/recall`, `/summary add|session`, `/forget match|pref|summary`, natural-language remember/forget/recall), Phase 3 **`/mute`**, **`/unmute`**, **`/voice`**, and Phase 4–5 **`/ptt`**, **`/listen`**, **`/wake`**, **`/voice-kill`**, **`/voice-arm`**. Auto session summaries (local bullets only) can write on a turn cadence and on `/exit` when `memory.auto_summarize` is true. Bulk note delete asks for confirmation; tool decisions are audited.
 
 ## Phases 6–9 (tools, integrations, desk) — MVP in this repo
 
 - **Phase 6 — Local files:** with `tools.enabled` and `tools.files.enabled`, use **`/file read`**, **`/file search`**, **`/file write`**, **`/code-search`**, **`/summarize`** (paths must stay under `tools.approved_paths`). Writes and cloud-bound summarizes go through the same **y/N approval + audit** pattern as earlier phases. Optional PDF text: `pip install -e ".[pdf]"`.
 - **Phase 7 — Coding / git:** with `tools.shell.enabled`, **`/git …`** runs a **small allow-listed** set of read-only git commands (`git status`, `git diff`, `git branch --show-current`, `git log -1 --oneline`, and `git diff --stat -- …`). No arbitrary shell.
-- **Phase 8 — Integrations:** **`/integrations`** prints Gmail/Calendar/browser **roadmap stubs**. **`/gh`** commands: **`me`**, **`repos`**, **`prs`**, **`issues`** (GitHub REST; token from env/keyring for authenticated calls). **`/open`** plus an `https://` URL uses the system browser when `tools.browser.enabled` and approvals pass.
+- **Phase 8 — Integrations:** **`/gh`** (`me`/`repos`/`prs`/`issues`), **`/open`**, and **`/gmail`** (`status`/`auth`/`inbox`/`read`/`draft`/`send` with confirm-before-send). Calendar/browser automation remain stubs via **`/integrations`**. Gmail needs `pip install -e ".[gmail]"` plus OAuth client secrets path in config (see `docs/API_KEYS_SETUP.md`).
 - **Phase 9 — Desk:** optional Textual hub — install **`pip install -e ".[desktop]"`** then run **`atticus-desktop`** (or `python -m atticus.desktop`). It is a companion window; full chat stays **`python -m atticus`**.
 
-OAuth mail/calendar, deep browser automation, autostart tray, and a full GUI chat are **not** finished here; they need product decisions and secrets handling beyond this codebase pass.
+Deep browser automation, autostart tray, and a full GUI chat are **not** finished here.
 
 ### Full product — one step at a time (backlog)
 
-1. **Done:** shared **`get_credential(env)`** (`atticus/core/secrets.py`) — env first, optional **keyring** (`pip install -e ".[secrets]"`, `keyring set ProjectAtticus GITHUB_TOKEN`).
-2. **Done:** authenticated GitHub CLI — **`/gh me`**, **`/gh repos`**, **`/gh prs owner repo [open|closed|all]`** (token required for `me`/`repos`; `prs` uses token when set; all use **y/N approval** except **`/gh issues`** which stays quick for public repos). Limits: `tools.github.repo_list_limit`, `tools.github.pr_list_limit`.
-3. **Next good step:** **Gmail** read-only OAuth (device or installed app) + “never send without confirm”.
-4. Then: **Calendar** read, then writes behind double-confirm.
-5. Then: **Browser** helper with URL allowlist + citation capture.
-6. Then: **Tray / autostart** and richer **desktop** UI wiring into the same tool gates.
+1. **Done:** shared **`get_credential(env)`** — env first, optional **keyring**; OpenAI/Anthropic/Gemini all use it.
+2. **Done:** authenticated GitHub CLI — **`/gh me|repos|prs|issues`**.
+3. **Done:** Claude + Gemini provider implementations (`pip install -e ".[providers]"`, then `/provider anthropic|gemini`).
+4. **Done:** local auto conversation summarizer (`/summary session`, auto on cadence/exit; no raw transcripts).
+5. **Done:** Gmail read OAuth + draft/send with high-friction confirm (`/gmail …`).
+6. **Next good step:** **Calendar** read, then writes behind double-confirm.
+7. Then: **Browser** helper with URL allowlist + citation capture.
+8. Then: **Tray / autostart** and richer **desktop** UI wiring into the same tool gates.
 
 Do not add real keys to `.env.example`. Keep `.env` and `config/atticus.yaml` out of git if they contain secrets or machine-specific paths.

@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import os
 from typing import Any
 
 from openai import APIError, APITimeoutError, OpenAI, RateLimitError
 
 from atticus.core.config import ProviderOpenAIConfig
 from atticus.core.errors import ProviderError
+from atticus.core.secrets import get_credential
 
 
 class OpenAIProvider:
@@ -16,10 +16,11 @@ class OpenAIProvider:
 
     def __init__(self, cfg: ProviderOpenAIConfig) -> None:
         self._cfg = cfg
-        key = os.environ.get(cfg.api_key_env, "").strip()
+        key = get_credential(cfg.api_key_env)
         if not key:
             raise ProviderError(
                 f"Missing API key: set {cfg.api_key_env} in your environment or .env file "
+                "(or `pip install -e \".[secrets]\"` and store it in the OS keyring) "
                 "before using the OpenAI provider."
             )
         self._client = OpenAI(api_key=key, timeout=cfg.timeout_seconds)

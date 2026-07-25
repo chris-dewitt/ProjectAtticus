@@ -73,6 +73,11 @@ class MemoryConfig(BaseModel):
     backend: str = "sqlite"
     sqlite_path: str = "data/atticus_memory.sqlite3"
     allow_forget: bool = True
+    auto_summarize: bool = True
+    """When true, write local session summaries periodically and on exit (never raw transcripts)."""
+    auto_summarize_every_n_turns: int = 6
+    """User turns between automatic summary writes; also summarizes on clean /exit when due."""
+    summary_max_chars: int = 900
 
 
 class VoiceConfig(BaseModel):
@@ -129,6 +134,21 @@ class ToolsEmailConfig(BaseModel):
     model_config = ConfigDict(extra="ignore")
     enabled: bool = False
     require_confirmation_for_send: bool = True
+    # Gmail OAuth (optional ``.[gmail]`` extra)
+    gmail_client_secrets_path: str | None = None
+    """Path to Google OAuth desktop client secrets JSON (never commit real secrets)."""
+    gmail_token_path: str = "data/gmail_token.json"
+    """Cached user token path (under data/; gitignored)."""
+    gmail_inbox_limit: int = 10
+    gmail_scopes_readonly: list[str] = Field(
+        default_factory=lambda: ["https://www.googleapis.com/auth/gmail.readonly"]
+    )
+    gmail_scopes_compose: list[str] = Field(
+        default_factory=lambda: [
+            "https://www.googleapis.com/auth/gmail.readonly",
+            "https://www.googleapis.com/auth/gmail.compose",
+        ]
+    )
 
 
 class ToolsCalendarConfig(BaseModel):
