@@ -25,7 +25,7 @@ def _approved_echo(tmp_path: Path) -> tuple[PolicyService, ToolGateway, str]:
             permission_class=PermissionClass.WRITE,
             action_summary="Echo a test message",
             inputs={"message": "steady as she goes"},
-            actor="boss",
+            actor="speaker",
         ),
         create_approval=True,
     )
@@ -34,7 +34,7 @@ def _approved_echo(tmp_path: Path) -> tuple[PolicyService, ToolGateway, str]:
     decided = store.decide(
         approval.id,
         approve=True,
-        actor="boss",
+        actor="speaker",
         action_digest=approval.action_digest,
         confirmation=f"APPROVE {approval.confirmation_hint}",
     )
@@ -86,7 +86,7 @@ def test_file_write_dispatch_under_approved_path(tmp_path: Path) -> None:
             tool_name="file_write",
             permission_class=PermissionClass.WRITE,
             action_summary=f"Write {target.name}",
-            inputs={"path": str(target), "content": "hello boss"},
+            inputs={"path": str(target), "content": "hello speaker"},
             resource=str(target),
         ),
         create_approval=True,
@@ -95,7 +95,7 @@ def test_file_write_dispatch_under_approved_path(tmp_path: Path) -> None:
     store.decide(
         result.approval.id,
         approve=True,
-        actor="boss",
+        actor="speaker",
         action_digest=result.approval.action_digest,
         confirmation=f"APPROVE {result.approval.confirmation_hint}",
     )
@@ -105,4 +105,4 @@ def test_file_write_dispatch_under_approved_path(tmp_path: Path) -> None:
         actor="atticus",
     )
     assert dispatched.replayed is False
-    assert target.read_text(encoding="utf-8").startswith("hello boss")
+    assert target.read_text(encoding="utf-8").startswith("hello speaker")

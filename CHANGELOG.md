@@ -32,6 +32,13 @@ Track A packaging milestone (personal assistant), not Track B M0–M5 completion
 
 ## Unreleased
 
+### Speaker / Listener + downloadable app + working UI panels
+
+- Persona rename: user is **The Speaker**; Atticus is **The Listener** (Boss retired)
+- Terminal buttons use in-page modals (fixes Settings/Auth in desktop webview)
+- Downloadable Windows app entry: `python -m atticus.launcher` / `Atticus.exe` via `scripts/build_windows_app.ps1`
+- Docs: `docs/DOWNLOADABLE_APP.md`, updated persona/prompt
+
 ### Classical terminal + installable desktop/phone UI
 
 - Subdued brass/amber classical terminal redesign for `/ui`

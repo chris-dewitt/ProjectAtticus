@@ -17,8 +17,15 @@ Atticus is intentionally built as a serious personal software project: privacy-c
 
 Package version `1.0.0` labels the Track A personal-assistant packaging milestone.
 The classical `/ui` terminal covers GUI chat, approvals, settings, traces, and
-the signature demo. Install it as a phone/desktop PWA, or open a native window
-with `python -m atticus.desktop ui` (`pip install -e ".[api,desktop]"`).
+the signature demo. Atticus is **The Listener**; you are **The Speaker**.
+
+Downloadable desktop app:
+
+```powershell
+pip install -e ".[api,desktop]"
+python -m atticus.launcher
+# or build Atticus.exe — see docs/DOWNLOADABLE_APP.md
+```
 
 **Track B — portfolio agent platform (M0–M5 vertical slices shipped locally):**
 
@@ -34,7 +41,7 @@ Azure Terraform is a sketch, not a live shared environment.
 
 ## North star
 
-Build a full-character Southern gentleman assistant: kind, capable, loyal, funny in a restrained way, and always useful. Atticus is a wise old advisor who loves everybody, but Boss most of all. The longer-term portfolio architecture adds auditable agent workflows without abandoning that personal assistant.
+Build a full-character Southern gentleman assistant: kind, capable, loyal, funny in a restrained way, and always useful. Atticus is a wise old advisor who loves everybody, but The Speaker most of all. The longer-term portfolio architecture adds auditable agent workflows without abandoning that personal assistant.
 
 ## Track A foundation (already implemented)
 
@@ -136,7 +143,7 @@ Same steps as **Quick start** above. After `pip install -e ".[dev]"`, you can ru
 
 Replies are spoken with **`pyttsx3`** (Windows SAPI voices) when `voice.spoken_responses` is true in config. Use **`/mute`** and **`/unmute`** for a runtime pause without editing YAML; **`/voice`** shows the current flags. If the engine fails to start or playback errors, you still get full text output and a yellow warning—nothing in the chat loop hard-depends on audio.
 
-Optional tuning: set `voice.tts_rate` to an integer (words per minute) if your machine supports it. Set `voice.muted: true` in YAML to start sessions silent until Boss runs `/unmute`.
+Optional tuning: set `voice.tts_rate` to an integer (words per minute) if your machine supports it. Set `voice.muted: true` in YAML to start sessions silent until The Speaker runs `/unmute`.
 
 ## Phase 4 — Speech in (push-to-talk, local STT)
 

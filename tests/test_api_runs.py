@@ -28,7 +28,7 @@ def client(repo_root: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
         config_path=path,
         telemetry=Telemetry(enabled=True, emit_stderr=False, service_name="runs-test"),
         run_store=store,
-        provider_factory=lambda _name: MockProvider(reply="Steady as she goes, Boss."),
+        provider_factory=lambda _name: MockProvider(reply="Steady as she goes, Speaker."),
         default_provider="mock",
     )
     return TestClient(app)
@@ -48,7 +48,7 @@ def test_conversation_message_run_flow(client: TestClient) -> None:
     body = posted.json()
     assert body["message"]["content"] == "Status report?"
     assert body["run"]["status"] == "succeeded"
-    assert body["run"]["output_text"] == "Steady as she goes, Boss."
+    assert body["run"]["output_text"] == "Steady as she goes, Speaker."
     run_id = body["run"]["id"]
 
     got = client.get(f"/v1/runs/{run_id}")

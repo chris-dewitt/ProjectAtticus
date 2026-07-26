@@ -34,13 +34,12 @@ def _run_tray() -> None:
 
 
 def _run_ui(*, port: int, browser: bool) -> int:
-    from atticus.ui.web_shell import open_terminal_ui
+    from atticus.launcher import main as launcher_main
 
-    return open_terminal_ui(
-        port=port,
-        prefer_webview=not browser,
-        start_server=True,
-    )
+    argv = ["--port", str(port)]
+    if browser:
+        argv.append("--browser")
+    return launcher_main(argv)
 
 
 def _autostart(action: str) -> int:

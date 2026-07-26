@@ -25,5 +25,5 @@ def run_tool_with_approval(
     deny_unless_tools_enabled(ctx, request.tool_name)
     source = ConsoleYesNoSource(console)
     if not request_tool_approval(source, store, request):
-        raise PermissionDenied("Boss declined; Atticus will not run that tool.")
+        raise PermissionDenied("The Speaker declined; Atticus will not run that tool.")
     return action()

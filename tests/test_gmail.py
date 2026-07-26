@@ -81,12 +81,12 @@ def test_create_draft_encodes_raw() -> None:
 
     service = SimpleNamespace(users=lambda: _Users())
     draft_id = gmail_api.create_draft(
-        service, to="boss@example.com", subject="Hi", body="Body text"
+        service, to="speaker@example.com", subject="Hi", body="Body text"
     )
     assert draft_id == "d1"
     raw = captured["body"]["message"]["raw"]
     decoded = base64.urlsafe_b64decode(raw.encode("utf-8")).decode("utf-8")
-    assert "boss@example.com" in decoded
+    assert "speaker@example.com" in decoded
     assert "Body text" in decoded
 
 

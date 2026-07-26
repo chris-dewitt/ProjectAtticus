@@ -384,6 +384,93 @@ button:disabled {
   }
 }
 
+/* In-page modal — required because window.prompt is unreliable in desktop webviews. */
+.modal-root {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.modal-root[hidden] {
+  display: none !important;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.62);
+}
+
+.modal {
+  position: relative;
+  z-index: 1;
+  width: min(28rem, 100%);
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  box-shadow: 0 18px 50px var(--shadow);
+  padding: 1.1rem 1.15rem 1rem;
+}
+
+.modal-title {
+  margin: 0 0 0.45rem;
+  font-size: 0.9rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brass-hot);
+  font-weight: 500;
+}
+
+.modal-copy {
+  margin: 0 0 0.85rem;
+  color: var(--text-soft);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.modal-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.modal-form label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brass);
+}
+
+.modal-form input,
+.modal-form select {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--brass-hot);
+  border: 1px solid var(--line);
+  padding: 0.65rem 0.7rem;
+  font: inherit;
+  font-size: 0.85rem;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.modal-form input:focus,
+.modal-form select:focus {
+  outline: none;
+  border-color: var(--brass);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  margin-top: 1rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .bezel, .line { animation: none; }
 }

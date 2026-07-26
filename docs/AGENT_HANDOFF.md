@@ -2,7 +2,7 @@
 
 ## What we are building
 
-**Track A (shipped):** A Windows-first, local-first personal assistant named Atticus. He is a full-character Southern gentleman advisor who responds to Boss, uses OpenAI by default, supports Claude/Gemini, remembers summaries/preferences, speaks/listens through optional local voice components, runs permissioned local tools when enabled, and offers retro `/ui` GUI chat plus tray/desk.
+**Track A (shipped):** A Windows-first, local-first personal assistant named Atticus. He is a full-character Southern gentleman advisor who responds to The Speaker, uses OpenAI by default, supports Claude/Gemini, remembers summaries/preferences, speaks/listens through optional local voice components, runs permissioned local tools when enabled, and offers retro `/ui` GUI chat plus tray/desk.
 
 **Track B (local M0–M5 slices shipped):** A secure local-first agent platform (policy, bounded runs, traces, evals, sandbox, signature demo) defined in root `SPEC.md`, evolved under `atticus/`. See ADR-010–018 and `docs/PORTFOLIO_ALIGNMENT.md`.
 
@@ -43,7 +43,7 @@ Do not start with:
 
 - Broader idempotent gateway handlers (gmail/calendar/git publish)
 - Optional Postgres repository backend behind existing store interfaces
-- Managed OTLP collector / live Azure apply when Boss wants hosting
+- Managed OTLP collector / live Azure apply when The Speaker wants hosting
 - Native desktop full-window chat polish (retro `/ui` already covers GUI chat)
 
 ## Completion report format

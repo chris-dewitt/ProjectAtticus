@@ -44,7 +44,7 @@ class PolicyInput:
     permission_class: PermissionClass
     action_summary: str
     inputs: dict[str, Any] = field(default_factory=dict)
-    actor: str = "boss"
+    actor: str = "speaker"
     resource: str | None = None
     external_data: bool = False
     destructive: bool = False
@@ -108,7 +108,7 @@ class ApprovalRequest:
     expires_at: str
     inputs: dict[str, Any] = field(default_factory=dict)
     resource: str | None = None
-    request_actor: str = "boss"
+    request_actor: str = "speaker"
     external_data: bool = False
     destructive: bool = False
     decided_at: str | None = None

@@ -15,7 +15,7 @@ Atticus uses cloud LLM providers as interchangeable “brains” behind a local 
 | Anthropic | `claude-3-5-sonnet-20241022` | Stub (`AnthropicProviderStub`) |
 | Gemini | `gemini-1.5-flash` | Stub (`GeminiProviderStub`) |
 
-Defaults may change via `config/atticus.yaml`. Boss may switch providers with `/provider` when implementations exist; stub providers raise a clear error.
+Defaults may change via `config/atticus.yaml`. The Speaker may switch providers with `/provider` when implementations exist; stub providers raise a clear error.
 
 ## Intended use
 

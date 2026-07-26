@@ -48,9 +48,9 @@ def summarize_conversation(
     assistant_bits = [t for role, t in turns if role == "assistant"]
 
     bullets: list[str] = []
-    # Prefer recent user intents (what Boss asked for).
+    # Prefer recent user intents (what The Speaker asked for).
     for text in user_bits[-max_bullets:]:
-        bullets.append(f"- Boss: {_clip(text, 140)}")
+        bullets.append(f"- The Speaker: {_clip(text, 140)}")
     # Include a couple of assistant conclusions if space remains.
     remaining = max(0, max_bullets - len(bullets))
     for text in assistant_bits[-remaining:]:

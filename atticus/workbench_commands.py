@@ -214,7 +214,7 @@ def handle_tool_slash(cmd: str, args: list[str], ctx: ToolCliContext) -> bool:
                 if "||" not in joined:
                     ctx.console.print(
                         "Usage: /gmail draft <to> <subject> || <body>\n"
-                        "Example: /gmail draft boss@example.com Quick hello || Just checking in."
+                        "Example: /gmail draft speaker@example.com Quick hello || Just checking in."
                     )
                     return True
                 head, body = joined.split("||", 1)
@@ -755,7 +755,7 @@ def handle_tool_slash(cmd: str, args: list[str], ctx: ToolCliContext) -> bool:
                     ctx.console.print("[dim]Summarize cancelled.[/dim]")
                     return True
             head = ctx.persona_core.split("\n---\n", 1)[0] if "---" in ctx.persona_core else ctx.persona_core
-            sys_prompt = head[:4000] + "\nBoss asked for a concise summary of a local file excerpt. Stay factual."
+            sys_prompt = head[:4000] + "\nThe Speaker asked for a concise summary of a local file excerpt. Stay factual."
             msgs = [
                 {"role": "system", "content": sys_prompt},
                 {"role": "user", "content": f"File: {path}\n\n---\n\n{excerpt}"},

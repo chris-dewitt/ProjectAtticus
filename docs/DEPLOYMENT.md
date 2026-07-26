@@ -41,4 +41,4 @@ Terraform sketches live under `infra/terraform/`. Before apply:
 3. Store `ATTICUS_API_TOKEN` / `ATTICUS_APPROVAL_TOKEN` / provider keys in Key Vault.
 4. Confirm the threat model in `docs/SECURITY.md`.
 
-Track A on Boss's Windows laptop does **not** require Azure.
+Track A on The Speaker's Windows laptop does **not** require Azure.

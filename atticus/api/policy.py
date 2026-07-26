@@ -23,7 +23,7 @@ class PolicyIntentRequest(BaseModel):
     permission_class: PermissionClass
     action_summary: str = Field(min_length=1, max_length=2000)
     inputs: dict[str, Any] = Field(default_factory=dict)
-    actor: str = Field(default="boss", min_length=1, max_length=120)
+    actor: str = Field(default="speaker", min_length=1, max_length=120)
     resource: str | None = Field(default=None, max_length=2000)
     external_data: bool = False
     destructive: bool = False

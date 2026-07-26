@@ -4,12 +4,12 @@
 
 Atticus should ultimately be fully operational by voice:
 
-- Boss says "Atticus" or "Hey Atticus."
+- The Speaker says "Atticus" or "Hey Atticus."
 - Atticus wakes.
-- Boss speaks request.
+- The Speaker speaks request.
 - Atticus thinks, acts if allowed, and speaks the answer aloud.
 
-Boss wants spoken responses always on by default.
+The Speaker wants spoken responses always on by default.
 
 ## Engineering reality
 
@@ -45,7 +45,7 @@ Possible STT options:
 - local lightweight Whisper variant;
 - faster-whisper with small/int8 model if the laptop can handle it;
 - Vosk for lightweight offline recognition;
-- cloud STT only if Boss explicitly allows audio to leave the laptop.
+- cloud STT only if The Speaker explicitly allows audio to leave the laptop.
 
 Default privacy stance: local STT.
 

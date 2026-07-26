@@ -42,7 +42,7 @@ Memory policy:
 - Store summaries/preferences, not raw transcripts, by default.
 - Add "forget this" from the beginning.
 - Allow memory inspection.
-- Do not store sensitive personal facts unless Boss explicitly asks.
+- Do not store sensitive personal facts unless The Speaker explicitly asks.
 
 Secrets policy:
 

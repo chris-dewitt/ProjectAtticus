@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="dark" />
   <meta name="theme-color" content="#0b0a09" />
-  <meta name="description" content="Atticus — local-first classical terminal for Boss." />
+  <meta name="description" content="Atticus — The Listener. Local terminal for The Speaker." />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Atticus" />
@@ -28,7 +28,7 @@
       <header class="top">
         <div class="brand-block">
           <p class="brand">ATTICUS</p>
-          <p class="tag">Local terminal · Boss channel</p>
+          <p class="tag">The Listener · channel for The Speaker</p>
         </div>
         <div class="status" id="link-status">LINK …</div>
       </header>
@@ -37,12 +37,12 @@
         <section class="panel log" id="log" aria-live="polite"></section>
 
         <section class="panel compose">
-          <label class="prompt-label" for="prompt">boss@atticus:~$</label>
+          <label class="prompt-label" for="prompt">speaker@atticus:~$</label>
           <textarea
             id="prompt"
             rows="2"
             maxlength="4000"
-            placeholder="message Atticus — enter to send, shift+enter for newline"
+            placeholder="address The Listener — enter to send, shift+enter for newline"
             autocomplete="off"
             autocapitalize="off"
             spellcheck="false"
@@ -75,10 +75,24 @@
 
       <footer class="foot">
         <span id="session">session: —</span>
-        <span id="install-hint">desktop · phone PWA · local only</span>
+        <span id="install-hint">desktop app · phone PWA · local only</span>
       </footer>
     </div>
   </div>
+
+  <div id="modal-root" class="modal-root" hidden>
+    <div class="modal-backdrop" data-modal-dismiss></div>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <h2 id="modal-title" class="modal-title"></h2>
+      <p id="modal-copy" class="modal-copy"></p>
+      <form id="modal-form" class="modal-form"></form>
+      <div class="modal-actions">
+        <button type="button" id="modal-cancel" class="ghost">Cancel</button>
+        <button type="submit" form="modal-form" id="modal-ok">Save</button>
+      </div>
+    </div>
+  </div>
+
   <script src="/ui/app.js"></script>
 </body>
 </html>

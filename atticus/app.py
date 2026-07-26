@@ -252,9 +252,9 @@ def run_cli() -> int:
 
     while True:
         try:
-            raw = console.input("[bold cyan]Boss>[/bold cyan] ").strip()
+            raw = console.input("[bold cyan]The Speaker>[/bold cyan] ").strip()
         except (EOFError, KeyboardInterrupt):
-            console.print("\nFair enough, Boss. Stepping away.")
+            console.print("\nFair enough, Speaker. Stepping away.")
             if user_turns_since_summary > 0 and cfg.memory.auto_summarize:
                 sid = persist_session_summary(reason="exit")
                 if sid is not None:
@@ -272,7 +272,7 @@ def run_cli() -> int:
                 continue
             if verb == "remember":
                 if not payload:
-                    console.print("Tell me what to remember, Boss.")
+                    console.print("Tell me what to remember, Speaker.")
                     continue
                 mid = memory.add_item(payload)
                 console.print(f"Remembered as item [bold]{mid}[/bold].")
@@ -283,7 +283,7 @@ def run_cli() -> int:
                     console.print("[red]Forget flow is disabled in config.[/red]")
                     continue
                 if not payload:
-                    console.print("Tell me what to forget (substring match), Boss.")
+                    console.print("Tell me what to forget (substring match), Speaker.")
                     continue
                 req = ToolCallRequest(
                     tool_name="memory_forget_match",
@@ -302,14 +302,14 @@ def run_cli() -> int:
                 if payload:
                     hits = memory.search_items(payload)
                     if not hits:
-                        console.print("No matching notes found, Boss.")
+                        console.print("No matching notes found, Speaker.")
                     else:
                         for it in hits:
                             console.print(f"[bold]{it.id}[/bold] [{it.kind}] {it.content} — {it.created_at}")
                 else:
                     items = memory.list_items(limit=10)
                     if not items:
-                        console.print("No saved notes yet, Boss.")
+                        console.print("No saved notes yet, Speaker.")
                     else:
                         for it in items:
                             console.print(f"[bold]{it.id}[/bold] [{it.kind}] {it.content} — {it.created_at}")
@@ -322,7 +322,7 @@ def run_cli() -> int:
                     sid = persist_session_summary(reason="exit")
                     if sid is not None:
                         console.print(f"[dim]Saved local session summary #{sid} on exit.[/dim]")
-                console.print("Until next time, Boss.")
+                console.print("Until next time, Speaker.")
                 memory.close()
                 return 0
             if cmd == "/help":
@@ -330,7 +330,7 @@ def run_cli() -> int:
                 continue
             if cmd == "/mute":
                 voice_out.set_muted(True)
-                console.print("[dim]Speech muted. You will still see every reply here, Boss.[/dim]")
+                console.print("[dim]Speech muted. You will still see every reply here, Speaker.[/dim]")
                 continue
             if cmd == "/unmute":
                 voice_out.set_muted(False)
@@ -420,7 +420,7 @@ def run_cli() -> int:
                 if section == "items":
                     items = memory.list_items()
                     if not items:
-                        console.print("No saved memory items yet, Boss.")
+                        console.print("No saved memory items yet, Speaker.")
                     else:
                         for it in items:
                             console.print(f"[bold]{it.id}[/bold] [{it.kind}] {it.content} — {it.created_at}")
@@ -428,7 +428,7 @@ def run_cli() -> int:
                 if section == "prefs":
                     prefs = memory.list_preferences()
                     if not prefs:
-                        console.print("No preferences stored yet, Boss.")
+                        console.print("No preferences stored yet, Speaker.")
                     else:
                         for p in prefs:
                             src = f" ({p.source})" if p.source else ""
@@ -437,7 +437,7 @@ def run_cli() -> int:
                 if section in {"summaries", "summary"}:
                     sums = memory.list_summaries()
                     if not sums:
-                        console.print("No conversation summaries yet, Boss.")
+                        console.print("No conversation summaries yet, Speaker.")
                     else:
                         for s in sums:
                             console.print(
@@ -447,7 +447,7 @@ def run_cli() -> int:
                 if section == "audit":
                     rows = memory.list_tool_approvals(limit=40)
                     if not rows:
-                        console.print("No tool approval records yet, Boss.")
+                        console.print("No tool approval records yet, Speaker.")
                     else:
                         for r in rows:
                             flag = "approved" if r.approved else "denied"
@@ -479,7 +479,7 @@ def run_cli() -> int:
                 q = " ".join(args).strip()
                 hits = memory.search_items(q)
                 if not hits:
-                    console.print("No matching notes found, Boss.")
+                    console.print("No matching notes found, Speaker.")
                 else:
                     for it in hits:
                         console.print(f"[bold]{it.id}[/bold] [{it.kind}] {it.content} — {it.created_at}")
@@ -494,7 +494,7 @@ def run_cli() -> int:
                 if sub == "list":
                     prefs = memory.list_preferences()
                     if not prefs:
-                        console.print("No preferences stored yet, Boss.")
+                        console.print("No preferences stored yet, Speaker.")
                     else:
                         for p in prefs:
                             console.print(f"[bold]{p.key}[/bold] = {p.value}")
@@ -526,7 +526,7 @@ def run_cli() -> int:
                         continue
                     sid = persist_session_summary(reason="manual")
                     if sid is None:
-                        console.print("Nothing to summarize yet in this session, Boss.")
+                        console.print("Nothing to summarize yet in this session, Speaker.")
                     else:
                         console.print(
                             f"Local session summary stored as [bold]{sid}[/bold] "

@@ -4,7 +4,7 @@
 
 Decision: build for Windows first.
 
-Reason: Boss's target machine is a Windows Dell Inspiron.
+Reason: The Speaker's target machine is a Windows Dell Inspiron.
 
 Implication: setup docs and path handling must be Windows-friendly.
 
@@ -68,10 +68,10 @@ Implication: voice layer must be optional and failure-tolerant.
 
 Decision: maintain two coordinated tracks in one repository.
 
-- **Track A (current product):** Windows-first personal assistant UX — Rich CLI, Boss/persona, SQLite memory, permission gates, optional voice, opt-in tools under `atticus/`. This is what ships and what package version `1.0.0` refers to.
+- **Track A (current product):** Windows-first personal assistant UX — Rich CLI, Speaker/persona, SQLite memory, permission gates, optional voice, opt-in tools under `atticus/`. This is what ships and what package version `1.0.0` refers to.
 - **Track B (portfolio north star):** Secure local-first agent platform described in root `SPEC.md` — bounded orchestrator, policy engine, API/traces/evals, EvalForge hooks, signature research→GitHub-issue demo.
 
-Reason: the portfolio flagship needs auditable agent-platform architecture, while Boss still needs a working local assistant. Erasing either narrative would misrepresent status or throw away a working foundation.
+Reason: the portfolio flagship needs auditable agent-platform architecture, while The Speaker still needs a working local assistant. Erasing either narrative would misrepresent status or throw away a working foundation.
 
 Implications:
 
@@ -137,7 +137,7 @@ Includes:
 - CLI `/citations list|show <id>` and API `GET /v1/citations[/{id}]`
 - Legacy browse JSON normalized on read
 
-Reason: Boss asked for a terminal/hacker interface usable on computer or phone, and Track B M2 requires structured citations/provenance. Evolving the browse citation store avoids a parallel provenance system.
+Reason: The Speaker asked for a terminal/hacker interface usable on computer or phone, and Track B M2 requires structured citations/provenance. Evolving the browse citation store avoids a parallel provenance system.
 
 Implications:
 
@@ -211,7 +211,7 @@ and memory on Track A/B local installs. Provide `docker-compose.yml` with
 Postgres 16 + Redis 7 for shared-standard parity and future store backends.
 Do not silently migrate production data paths to Postgres in this epic.
 
-Reason: Boss's Windows laptop and privacy-first local use remain primary.
+Reason: The Speaker's Windows laptop and privacy-first local use remain primary.
 Portfolio reviewers can still bring up the standard dependency stack via Compose.
 
 Implications:

@@ -55,7 +55,7 @@ def _approve_echo(client: TestClient) -> dict:
             "permission_class": "write",
             "action_summary": "Echo hello",
             "inputs": {"message": "hello from gateway"},
-            "actor": "boss",
+            "actor": "speaker",
         },
     )
     assert created.status_code == 200
@@ -65,7 +65,7 @@ def _approve_echo(client: TestClient) -> dict:
         headers=TOKEN_HEADERS,
         json={
             "decision": "approve",
-            "actor": "boss",
+            "actor": "speaker",
             "action_digest": approval["action_digest"],
             "confirmation": f"APPROVE {approval['confirmation_hint']}",
         },

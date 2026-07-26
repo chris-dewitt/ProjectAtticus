@@ -34,7 +34,7 @@ def test_memory_remember_search_forget(base_cfg) -> None:
         default_provider="mock",
     )
     client = TestClient(app)
-    remembered = client.post("/v1/memory/remember", json={"text": "Boss likes concise reports", "kind": "preference"})
+    remembered = client.post("/v1/memory/remember", json={"text": "The Speaker likes concise reports", "kind": "preference"})
     assert remembered.status_code == 200
     search = client.get("/v1/memory/search", params={"q": "concise"})
     assert search.status_code == 200

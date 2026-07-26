@@ -27,7 +27,7 @@ When Track B file/research tools mature, source-derived records should retain so
 
 - Soft-delete for memory notes (`deleted_at`)
 - `/forget` flows and high-friction confirmation for bulk delete
-- Boss can clear preferences and summaries via CLI commands
+- The Speaker can clear preferences and summaries via CLI commands
 
 Document any future cloud retention separately before enabling hosted storage.
 
