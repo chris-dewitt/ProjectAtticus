@@ -29,7 +29,7 @@ Examples:
 
 ### Conversation summaries
 
-Short local summaries of important sessions.
+Short local summaries of important sessions. Atticus can build these **locally** from the in-memory chat (bullet extraction) via `/summary session`, and optionally on an automatic cadence / clean exit when `memory.auto_summarize` is true. Raw transcripts are still not stored by default — only the derived summary string is written to SQLite.
 
 ### Tool approval history
 

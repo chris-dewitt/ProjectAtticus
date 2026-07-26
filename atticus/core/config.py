@@ -73,6 +73,11 @@ class MemoryConfig(BaseModel):
     backend: str = "sqlite"
     sqlite_path: str = "data/atticus_memory.sqlite3"
     allow_forget: bool = True
+    auto_summarize: bool = True
+    """When true, write local session summaries periodically and on exit (never raw transcripts)."""
+    auto_summarize_every_n_turns: int = 6
+    """User turns between automatic summary writes; also summarizes on clean /exit when due."""
+    summary_max_chars: int = 900
 
 
 class VoiceConfig(BaseModel):
@@ -109,6 +114,9 @@ class ToolsShellConfig(BaseModel):
     model_config = ConfigDict(extra="ignore")
     enabled: bool = False
     require_confirmation: bool = True
+    allow_patch_apply: bool = True
+    allow_test_commands: bool = True
+    test_timeout_seconds: int = 120
 
 
 class ToolsFilesConfig(BaseModel):
@@ -123,18 +131,50 @@ class ToolsBrowserConfig(BaseModel):
     model_config = ConfigDict(extra="ignore")
     enabled: bool = False
     require_confirmation: bool = True
+    allowed_hosts: list[str] = Field(default_factory=list)
+    """Empty = any non-local http(s) host after approval; non-empty = host allowlist."""
+    max_response_bytes: int = 500_000
+    citation_dir: str = "data/citations"
+    user_agent: str = "ProjectAtticus/1.0 (+local; Boss-approved fetch)"
 
 
 class ToolsEmailConfig(BaseModel):
     model_config = ConfigDict(extra="ignore")
     enabled: bool = False
     require_confirmation_for_send: bool = True
+    # Gmail OAuth (optional ``.[gmail]`` extra)
+    gmail_client_secrets_path: str | None = None
+    """Path to Google OAuth desktop client secrets JSON (never commit real secrets)."""
+    gmail_token_path: str = "data/gmail_token.json"
+    """Cached user token path (under data/; gitignored)."""
+    gmail_inbox_limit: int = 10
+    gmail_scopes_readonly: list[str] = Field(
+        default_factory=lambda: ["https://www.googleapis.com/auth/gmail.readonly"]
+    )
+    gmail_scopes_compose: list[str] = Field(
+        default_factory=lambda: [
+            "https://www.googleapis.com/auth/gmail.readonly",
+            "https://www.googleapis.com/auth/gmail.compose",
+        ]
+    )
 
 
 class ToolsCalendarConfig(BaseModel):
     model_config = ConfigDict(extra="ignore")
     enabled: bool = False
     require_confirmation_for_write: bool = True
+    client_secrets_path: str | None = None
+    """OAuth desktop client JSON; falls back to tools.email.gmail_client_secrets_path when null."""
+    token_path: str = "data/calendar_token.json"
+    calendar_id: str = "primary"
+    list_days: int = 7
+    max_events: int = 20
+    scopes_readonly: list[str] = Field(
+        default_factory=lambda: ["https://www.googleapis.com/auth/calendar.readonly"]
+    )
+    scopes_write: list[str] = Field(
+        default_factory=lambda: ["https://www.googleapis.com/auth/calendar.events"]
+    )
 
 
 class ToolsGitHubConfig(BaseModel):

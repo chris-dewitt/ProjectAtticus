@@ -18,12 +18,22 @@ Environment variable:
 OPENAI_API_KEY
 ```
 
-## Optional future keys
+## Optional provider keys
+
+Claude and Gemini are implemented. Install SDKs with:
+
+```powershell
+pip install -e ".[providers]"
+```
+
+Environment variables:
 
 ```text
 ANTHROPIC_API_KEY
 GEMINI_API_KEY
 ```
+
+Keys resolve through `get_credential` (environment / `.env` first, then optional OS keyring via `pip install -e ".[secrets]"`).
 
 ## OpenAI API key setup
 
@@ -95,6 +105,23 @@ OPENAI_API_KEY=
 ANTHROPIC_API_KEY=
 GEMINI_API_KEY=
 ```
+
+## Google OAuth (Gmail + Calendar; not an API key in `.env`)
+
+Gmail and Calendar share the Google API optional extra and can share one OAuth Desktop client JSON:
+
+1. `pip install -e ".[gmail]"`
+2. Create an OAuth client (Desktop) in Google Cloud Console; enable **Gmail API** and/or **Google Calendar API**.
+3. Download the client secrets JSON somewhere outside git (or a gitignored path).
+4. Set `tools.enabled: true` and the relevant tool flags in `config/atticus.yaml`:
+   - Gmail: `tools.email.enabled` + `tools.email.gmail_client_secrets_path`
+   - Calendar: `tools.calendar.enabled` + `tools.calendar.client_secrets_path` (or leave null to reuse the Gmail secrets path)
+5. Run `atticus`, then:
+   - `/gmail auth readonly` (or `compose` for drafts/send)
+   - `/cal auth readonly` (or `write` for create/delete)
+6. Tokens cache under `data/` by default (`gmail_token.json`, `calendar_token.json`) — gitignored.
+
+Gmail send requires y/N plus typing `SEND`. Calendar create/delete require y/N plus typing `CREATE` / `DELETE`. Never commit client secrets or tokens.
 
 ## Provider billing warning
 

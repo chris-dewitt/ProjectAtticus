@@ -1,22 +1,23 @@
-"""Phase 8 placeholders — OAuth and provider APIs are not wired in this build."""
+"""Phase 8 status strings for remaining / partial integrations."""
 
 
 def gmail_status() -> str:
     return (
-        "Gmail integration is not configured yet. Planned: OAuth to Google, draft-only send flow, "
-        "and explicit Boss confirmation before any message leaves the machine."
+        "Gmail: /gmail status|auth|inbox|read|draft|send when tools.email.enabled "
+        '(optional pip install -e ".[gmail]"). Send requires explicit confirmation.'
     )
 
 
 def calendar_status() -> str:
     return (
-        "Calendar integration is not configured yet. Planned: read scopes first, "
-        "writes always behind a confirmation gate."
+        "Calendar: /cal status|auth|list|create|delete when tools.calendar.enabled "
+        '(same Google API extra as Gmail: pip install -e ".[gmail]"). '
+        "Writes require y/N plus CREATE/DELETE."
     )
 
 
 def browser_status() -> str:
     return (
-        "Headless browsing with source tracking is not enabled yet. "
-        "Use /open <https://...> for a single URL after confirmation when browser tools are on."
+        "Browser: /open opens a URL; /browse fetches https/http pages into local citations "
+        "(/citations lists them) when tools.browser.enabled. Host allowlist optional."
     )

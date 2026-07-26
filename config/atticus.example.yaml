@@ -40,6 +40,9 @@ memory:
   backend: sqlite
   sqlite_path: "data/atticus_memory.sqlite3"
   allow_forget: true
+  auto_summarize: true
+  auto_summarize_every_n_turns: 6
+  summary_max_chars: 900
 
 voice:
   spoken_responses: false
@@ -72,14 +75,32 @@ tools:
   shell:
     enabled: false
     require_confirmation: true
+    allow_patch_apply: true
+    allow_test_commands: true
+    test_timeout_seconds: 120
   files:
     enabled: false
     require_confirmation_for_edits: true
   email:
     enabled: false
     require_confirmation_for_send: true
+    # Google Cloud OAuth desktop client secrets JSON (never commit real credentials):
+    gmail_client_secrets_path: null
+    gmail_token_path: "data/gmail_token.json"
+    gmail_inbox_limit: 10
   calendar:
     enabled: false
     require_confirmation_for_write: true
+    # Reuses Gmail client secrets when null:
+    client_secrets_path: null
+    token_path: "data/calendar_token.json"
+    calendar_id: "primary"
+    list_days: 7
+    max_events: 20
   browser:
     enabled: false
+    require_confirmation: true
+    # Empty allowlist = any non-local http(s) host after approval:
+    allowed_hosts: []
+    max_response_bytes: 500000
+    citation_dir: "data/citations"

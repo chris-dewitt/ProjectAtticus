@@ -19,6 +19,7 @@ from atticus.core.router import ProviderRouter
 from atticus.core.tool_request import ToolCallRequest
 from atticus.memory.context import build_memory_context_block
 from atticus.memory.store import MemoryStore
+from atticus.memory.summarizer import should_auto_summarize, summarize_conversation
 from atticus.prompts.modes import valid_modes
 from atticus.voice.audio_state import VoiceSessionState
 from atticus.voice.stt import record_and_transcribe
@@ -51,6 +52,7 @@ def _help_text() -> str:
         "  /what-do-you-remember <query>   Same as /recall (docs name)\n"
         "  /pref list|get|set|forget ...\n"
         "  /summary add <text>   Store a conversation/session summary locally\n"
+        "  /summary session      Local privacy-safe summary of this chat (no raw transcript stored)\n"
         "  /forget ...           Forget by id, all (requires YES), match <text>, pref <key>, summary <id>\n"
         "  /mute | /unmute       Pause or resume spoken replies (runtime; text always works)\n"
         "  /voice                Show speech-related settings\n"
@@ -61,11 +63,17 @@ def _help_text() -> str:
         "  /file read|search|write …  Local file tools (tools.enabled + tools.files.enabled)\n"
         "  /code-search <regex>   Search *.py under approved_paths (approval)\n"
         "  /git <git …>          Allow-listed read-only git (tools.shell.enabled)\n"
+        "  /patch plan|apply <diff>  Plan/apply unified diff under approved_paths\n"
+        "  /test <pytest …>      Allow-listed pytest run (approval)\n"
         "  /gh me | /gh repos | /gh prs <o> <r> [open|closed|all]  Authenticated GitHub (token + approval)\n"
         "  /gh issues <o> <r>    Recent issues (public OK; token optional for rate limits)\n"
-        "  /open <url>           Browser open with approval when configured\n"
+        "  /open <url>           Open URL in system browser (approval)\n"
+        "  /browse <url>         Fetch page + save local citation (approval)\n"
+        "  /citations            List saved browse citations\n"
         "  /summarize <path>     Send file excerpt to LLM (approval if privacy flag on)\n"
-        "  /integrations         Phase 8 placeholder status (Gmail/Calendar/Browser)\n"
+        "  /gmail …              Gmail status/auth/inbox/read/draft/send (tools.email; .[gmail])\n"
+        "  /cal …                Calendar status/auth/list/create/delete (tools.calendar)\n"
+        "  /integrations         Integration status (Gmail/Calendar/Browser)\n"
         "\n"
         "Natural language (examples):\n"
         '  Atticus, remember that ...\n'
@@ -110,6 +118,7 @@ def run_cli() -> int:
 
     messages: list[dict[str, Any]] = [{"role": "system", "content": persona_core}]
     yesno = ConsoleYesNoSource(console)
+    user_turns_since_summary = 0
 
     def refresh_system_message() -> None:
         block = build_memory_context_block(memory, cfg) if cfg.privacy.memory_enabled else ""
@@ -127,8 +136,41 @@ def run_cli() -> int:
             return False
         return True
 
+    def persist_session_summary(*, reason: str) -> int | None:
+        """Write a local summary of the in-memory session; never stores raw transcripts."""
+        nonlocal user_turns_since_summary
+        if not cfg.privacy.memory_enabled or not cfg.privacy.store_summaries:
+            return None
+        summary = summarize_conversation(
+            messages,
+            max_chars=int(cfg.memory.summary_max_chars),
+        )
+        if not summary.strip():
+            return None
+        sid = memory.add_conversation_summary(
+            f"[{reason}] {summary}",
+            mode=mode,
+            provider=router.current,
+        )
+        user_turns_since_summary = 0
+        refresh_system_message()
+        return sid
+
+    def maybe_auto_summarize() -> None:
+        nonlocal user_turns_since_summary
+        if should_auto_summarize(
+            enabled=cfg.memory.auto_summarize,
+            store_summaries=cfg.privacy.store_summaries,
+            memory_enabled=cfg.privacy.memory_enabled,
+            user_turns_since_summary=user_turns_since_summary,
+            every_n_turns=int(cfg.memory.auto_summarize_every_n_turns),
+        ):
+            sid = persist_session_summary(reason="auto")
+            if sid is not None:
+                console.print(f"[dim]Saved local session summary #{sid} (no raw transcript stored).[/dim]")
+
     def process_chat_turn(user_text: str) -> None:
-        nonlocal messages, mode
+        nonlocal messages, mode, user_turns_since_summary
         refresh_system_message()
         messages.append({"role": "user", "content": user_text})
         try:
@@ -146,8 +188,10 @@ def run_cli() -> int:
             messages.pop()
             return
         messages.append({"role": "assistant", "content": reply})
+        user_turns_since_summary += 1
         _render_reply(reply)
         voice_out.speak(reply)
+        maybe_auto_summarize()
 
     def try_ptt(seconds: float) -> None:
         try:
@@ -211,6 +255,10 @@ def run_cli() -> int:
             raw = console.input("[bold cyan]Boss>[/bold cyan] ").strip()
         except (EOFError, KeyboardInterrupt):
             console.print("\nFair enough, Boss. Stepping away.")
+            if user_turns_since_summary > 0 and cfg.memory.auto_summarize:
+                sid = persist_session_summary(reason="exit")
+                if sid is not None:
+                    console.print(f"[dim]Saved local session summary #{sid} on exit.[/dim]")
             memory.close()
             return 0
 
@@ -270,6 +318,10 @@ def run_cli() -> int:
         if raw.startswith("/"):
             cmd, args = _split_command(raw)
             if cmd in {"/exit", "/quit"}:
+                if user_turns_since_summary > 0 and cfg.memory.auto_summarize:
+                    sid = persist_session_summary(reason="exit")
+                    if sid is not None:
+                        console.print(f"[dim]Saved local session summary #{sid} on exit.[/dim]")
                 console.print("Until next time, Boss.")
                 memory.close()
                 return 0
@@ -468,13 +520,26 @@ def run_cli() -> int:
             if cmd == "/summary":
                 if not require_memory():
                     continue
+                if args and args[0].lower() == "session":
+                    if not cfg.privacy.store_summaries:
+                        console.print("[red]Summaries are disabled (privacy.store_summaries=false).[/red]")
+                        continue
+                    sid = persist_session_summary(reason="manual")
+                    if sid is None:
+                        console.print("Nothing to summarize yet in this session, Boss.")
+                    else:
+                        console.print(
+                            f"Local session summary stored as [bold]{sid}[/bold] "
+                            "(derived bullets only; raw chat not saved)."
+                        )
+                    continue
                 if len(args) >= 2 and args[0].lower() == "add":
                     text = " ".join(args[1:]).strip()
                     sid = memory.add_conversation_summary(text, mode=mode, provider=router.current)
                     console.print(f"Summary stored as [bold]{sid}[/bold].")
                     refresh_system_message()
                     continue
-                console.print("Usage: /summary add <text>")
+                console.print("Usage: /summary add <text> | /summary session")
                 continue
             if cmd == "/forget":
                 if not require_memory():

@@ -23,6 +23,10 @@ dependencies = [
 dev = [
   "pytest>=8.0",
 ]
+providers = [
+  "anthropic>=0.34",
+  "google-genai>=1.0",
+]
 stt = [
   "sounddevice>=0.4.6",
   "numpy>=1.26",
@@ -36,6 +40,11 @@ pdf = [
 ]
 secrets = [
   "keyring>=25.0",
+]
+gmail = [
+  "google-api-python-client>=2.140",
+  "google-auth-httplib2>=0.2",
+  "google-auth-oauthlib>=1.2",
 ]
 
 [project.scripts]
