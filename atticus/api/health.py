@@ -77,6 +77,29 @@ def evaluate_readiness(
             )
         )
 
+    approvals_path = Path(cfg.policy.approvals_sqlite_path).expanduser()
+    approvals_parent = (
+        approvals_path.parent if approvals_path.parent != Path("") else Path(".")
+    )
+    try:
+        approvals_parent.mkdir(parents=True, exist_ok=True)
+        approvals_ok = approvals_parent.is_dir() and os_access_write(approvals_parent)
+        checks.append(
+            ReadyCheck(
+                name="approvals_path",
+                ok=approvals_ok,
+                detail=str(approvals_path),
+            )
+        )
+    except OSError as exc:
+        checks.append(
+            ReadyCheck(
+                name="approvals_path",
+                ok=False,
+                detail=f"unavailable: {exc.__class__.__name__}",
+            )
+        )
+
     ready = all(check.ok for check in checks)
     status = "ready" if ready else "not_ready"
     get_telemetry().emit(

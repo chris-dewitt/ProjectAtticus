@@ -13,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from atticus.api.citations import build_citations_router
 from atticus.api.errors import atticus_error_handler, unhandled_error_handler
 from atticus.api.health import live_response, load_ready_response
+from atticus.api.policy import build_policy_router
 from atticus.api.runs import build_runs_router
 from atticus.api.schemas import ReadyResponse
 from atticus.core.config import AppConfig, load_app_config, resolve_repo_root
@@ -26,6 +27,9 @@ from atticus.core.telemetry import (
 )
 from atticus.providers.base import LLMProvider
 from atticus.providers.mock_provider import MockProvider
+from atticus.policy.engine import PolicyEngine
+from atticus.policy.service import PolicyService
+from atticus.policy.store import ApprovalStore
 from atticus.runs.orchestrator import BoundedRunOrchestrator
 from atticus.runs.store import RunStore
 
@@ -36,6 +40,7 @@ def create_app(
     config_path: Path | None = None,
     telemetry: Telemetry | None = None,
     run_store: RunStore | None = None,
+    approval_store: ApprovalStore | None = None,
     provider_factory: Callable[[str], LLMProvider] | None = None,
     default_provider: str | None = None,
 ) -> FastAPI:
@@ -64,10 +69,10 @@ def create_app(
     redoc_url = "/redoc" if config.api.docs_enabled else None
     app = FastAPI(
         title="ProjectAtticus API",
-        version="0.3.0",
+        version="0.4.0",
         description=(
-            "Track B local API: health, bounded runs, citations, and optional retro /ui. "
-            "Approvals/traces remain later milestones."
+            "Track B local API: health, bounded runs, citations, policy/approvals, "
+            "and optional retro /ui. Traces remain a later milestone."
         ),
         docs_url=docs_url,
         redoc_url=redoc_url,
@@ -84,6 +89,17 @@ def create_app(
     if run_store is None:
         run_store = RunStore(Path(config.api.runs_sqlite_path).expanduser())
     app.state.run_store = run_store
+
+    if approval_store is None:
+        approval_store = ApprovalStore(
+            Path(config.policy.approvals_sqlite_path).expanduser()
+        )
+    app.state.approval_store = approval_store
+    app.state.policy_service = PolicyService(
+        PolicyEngine(config),
+        approval_store,
+        approval_ttl_seconds=config.policy.approval_ttl_seconds,
+    )
 
     if provider_factory is None:
         router = ProviderRouter(config)
@@ -114,6 +130,7 @@ def create_app(
     app.add_exception_handler(Exception, unhandled_error_handler)
     app.include_router(build_runs_router())
     app.include_router(build_citations_router())
+    app.include_router(build_policy_router())
 
     static_dir = Path(__file__).resolve().parent / "static" / "retro"
     if config.api.ui_enabled and static_dir.is_dir():

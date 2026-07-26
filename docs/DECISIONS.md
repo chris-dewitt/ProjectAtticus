@@ -145,3 +145,35 @@ Implications:
 2. No public internet exposure and no auth token yet — LAN mode is trusted-network only.
 3. Approvals/traces/sandbox remain later milestones.
 4. Citation artifacts may include local file paths; treat the citations directory as sensitive.
+
+## ADR-013 — Deterministic policy decisions and token-gated approvals (M3 slice)
+
+Decision: add a framework-independent `atticus/policy/` domain with deterministic
+policy evaluation, immutable action digests, durable approval requests, and an
+append-oriented audit log. Expose it through `/v1/policy`, `/v1/approvals`, and
+`/v1/audit/policy`.
+
+Security controls:
+
+- Models never decide permissions; `PolicyEngine` uses deterministic rules.
+- Every exact action receives a SHA-256 digest.
+- Approval decisions require both:
+  - `X-Atticus-Approval-Token` resolved from `ATTICUS_APPROVAL_TOKEN` (or the
+    configured environment/keyring name), and
+  - an exact phrase: `APPROVE <digest-prefix>` or `DENY <digest-prefix>`.
+- Tokens are never persisted or logged.
+- Approval requests expire and terminal decisions cannot be replayed.
+- Execution outcome is recorded separately after approval.
+
+Reason: Track B M3 requires first-class policy decisions, approval workflow, and
+audit metadata. The legacy Track A y/N gates remain in place; this slice creates
+the stronger platform boundary without weakening existing confirmations.
+
+Implications:
+
+1. API approval decisions are disabled (HTTP 503) until the token is configured.
+2. The retro UI displays pending requests and prompts for exact phrase + token;
+   it does not store the token.
+3. Policy/audit SQLite defaults to `data/atticus_approvals.sqlite3`.
+4. Tool execution is not yet automatically dispatched after approval; M3
+   remainder is coupling approved requests to an idempotent tool gateway.

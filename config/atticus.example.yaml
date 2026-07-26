@@ -56,6 +56,12 @@ api:
   max_messages_per_run: 32
   include_system_prompt: true
 
+# Track B M3 — durable policy decisions and token-gated approval decisions.
+policy:
+  approvals_sqlite_path: "data/atticus_approvals.sqlite3"
+  approval_ttl_seconds: 900
+  approval_token_env: ATTICUS_APPROVAL_TOKEN
+
 # Lightweight telemetry hooks (no OpenTelemetry exporter in M0)
 telemetry:
   enabled: true

@@ -45,6 +45,7 @@ def test_health_ready_ok(api_client: TestClient) -> None:
     assert "config" in names
     assert "memory_path" in names
     assert "runs_path" in names
+    assert "approvals_path" in names
     assert all(check["ok"] for check in body["checks"])
 
 

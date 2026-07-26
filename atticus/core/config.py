@@ -212,6 +212,15 @@ class ApiConfig(BaseModel):
     include_system_prompt: bool = True
 
 
+class PolicyConfig(BaseModel):
+    """Track B M3 policy/approval persistence and authentication."""
+
+    model_config = ConfigDict(extra="ignore")
+    approvals_sqlite_path: str = "data/atticus_approvals.sqlite3"
+    approval_ttl_seconds: int = 900
+    approval_token_env: str = "ATTICUS_APPROVAL_TOKEN"
+
+
 class TelemetryConfig(BaseModel):
     """Lightweight telemetry hooks; OTel exporter is deferred."""
 
@@ -244,6 +253,7 @@ class AppConfig(BaseModel):
     voice: VoiceConfig = Field(default_factory=VoiceConfig)
     tools: ToolsConfig = Field(default_factory=ToolsConfig)
     api: ApiConfig = Field(default_factory=ApiConfig)
+    policy: PolicyConfig = Field(default_factory=PolicyConfig)
     telemetry: TelemetryConfig = Field(default_factory=TelemetryConfig)
 
 
