@@ -17,9 +17,9 @@ This roadmap has two tracks. Track A is the shipped personal assistant. Track B 
 | 4 | Speech input (PTT) | Complete (optional `[stt]` extra) |
 | 5 | Wake phrase (two-clip local) | Complete (optional; not ambient always-on) |
 | 6 | Local file tools | MVP complete (tools off by default) |
-| 7 | Coding assistant tools | Partial (read-only git allowlist; no patch apply) |
-| 8 | Integrations | Partial (GitHub + `/open`; Gmail/Calendar stubs) |
-| 9 | Desktop/tray | Thin Textual companion only |
+| 7 | Coding assistant tools | MVP complete (`/git`, approved `/patch`, gated `/test`) |
+| 8 | Integrations | MVP complete (GitHub, Gmail, Calendar, browse citations) |
+| 9 | Desktop/tray | MVP complete (status desk, Windows tray, autostart) |
 
 ### Phase 0 — Repo foundation
 
@@ -167,7 +167,9 @@ Exit criteria:
 
 - Atticus can propose and apply code changes with approval.
 
-Current gap: allow-listed read-only git and code search exist; patch apply and approved test commands do not.
+Current implementation: allow-listed read-only git and code search, unified
+diff plan/apply constrained to approved paths, and approval-gated pytest
+commands. Arbitrary shell remains intentionally unavailable.
 
 ### Phase 8 — Integrations
 
@@ -187,7 +189,10 @@ Exit criteria:
 
 - Atticus can help manage communications and projects without bypassing confirmations.
 
-Current gap: GitHub REST CLI and browser open exist; Gmail/Calendar OAuth and headless browsing do not.
+Current implementation: GitHub REST CLI, Gmail and Calendar OAuth flows,
+high-friction confirmation for external writes, URL open, and approved
+server-rendered page fetch with local citation capture. JS-heavy browser
+automation remains deferred.
 
 ### Phase 9 — Desktop/tray experience
 
@@ -207,7 +212,9 @@ Exit criteria:
 
 - Atticus can be launched at startup and used throughout the day.
 
-Current gap: Textual status hub only; no tray/autostart/full chat UI.
+Current implementation: read-only Textual status desk, Windows tray launcher,
+and confirmation-gated Startup-folder management. A full graphical chat and
+graphical tool-approval UI remain deferred; the CLI is authoritative.
 
 ---
 
