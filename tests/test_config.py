@@ -14,6 +14,11 @@ def test_load_app_config_from_example(repo_root: Path, monkeypatch: pytest.Monke
     assert cfg.assistant.name == "Atticus"
     assert cfg.providers.routing.default_provider == "openai"
     assert path.name == "atticus.example.yaml"
+    assert cfg.api.host == "127.0.0.1"
+    assert cfg.api.port == 8000
+    assert cfg.api.enabled is False
+    assert cfg.telemetry.service_name == "project-atticus"
+    assert cfg.telemetry.enabled is True
 
 
 def test_resolve_repo_root_from_config_path(repo_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:

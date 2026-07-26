@@ -4,7 +4,7 @@
 
 **Track A (shipped):** A Windows-first, local-first personal assistant named Atticus. He is a full-character Southern gentleman advisor who responds to Boss, uses OpenAI by default, supports Claude/Gemini later, remembers summaries/preferences, speaks/listens through optional local voice components, and runs permissioned local tools when enabled.
 
-**Track B (planned):** A secure local-first agent platform (policy, bounded runs, traces, evals) defined in root `SPEC.md`. Not shipped. See `docs/PORTFOLIO_ALIGNMENT.md`.
+**Track B (in progress):** A secure local-first agent platform (policy, bounded runs, traces, evals) defined in root `SPEC.md`. M0 health/readiness API slice exists (`atticus/api/`, ADR-010); runs/approvals/traces are not shipped. See `docs/PORTFOLIO_ALIGNMENT.md`.
 
 ## Required reading order
 
@@ -30,12 +30,10 @@
 Do not start with:
 
 - re-scaffolding Phase 1 as if the repo were empty;
-- a Track B FastAPI/Postgres/Next.js rewrite unless Boss asks for that milestone;
-- a complex desktop UI or tray app;
+- a Track B Postgres/Next.js rewrite unless Boss asks for that milestone;
 - ambient always-listening wake word beyond the existing two-clip flow;
 - unrestricted shell execution;
-- Gmail sending;
-- calendar write access;
+- silent Gmail/calendar writes without confirmation;
 - unrestricted file access;
 - raw transcript storage;
 - silent model/provider fallback.
@@ -44,15 +42,14 @@ Do not start with:
 
 Track A extensions (typical):
 
-- real Anthropic/Gemini providers + route keys through `get_credential`;
-- Gmail read-only OAuth with confirm-before-send;
-- auto conversation summarizer;
-- Phase 7 deepen: patch proposal + approved apply;
-- richer desktop wiring into the same gates.
+- richer desktop wiring into the same gates;
+- JS-heavy browser automation (still open);
+- full GUI chat (still open).
 
 Track B (only if Boss names a milestone):
 
-- smallest M0 vertical slice with tests, docs, and ADR notes;
+- M0 remainders: broader CI (lint/type/security), optional OTel exporter ADR;
+- **M1 preferred next:** persisted bounded run API (create/get/cancel) on `atticus/api/`;
 - evolve existing seams in `atticus/` rather than inventing a parallel tree.
 
 ## Completion report format

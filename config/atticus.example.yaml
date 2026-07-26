@@ -44,6 +44,21 @@ memory:
   auto_summarize_every_n_turns: 6
   summary_max_chars: 900
 
+# Track B M0 — optional local health API (pip install -e ".[api]")
+api:
+  enabled: false
+  host: "127.0.0.1"
+  port: 8000
+  docs_enabled: false
+
+# Lightweight telemetry hooks (no OpenTelemetry exporter in M0)
+telemetry:
+  enabled: true
+  service_name: "project-atticus"
+  environment: local
+  log_level: INFO
+  emit_stderr: false
+
 voice:
   spoken_responses: false
   muted: false

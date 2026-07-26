@@ -17,13 +17,14 @@ Atticus is intentionally built as a serious personal software project: privacy-c
 
 Package version `1.0.0` labels this Track A milestone. A full GUI chat remains unfinished.
 
-**Track B — portfolio agent platform (planned, not shipped):**
+**Track B — portfolio agent platform (in progress / planned):**
 
-- Bounded orchestrator, policy engine, API/traces/evals per [`SPEC.md`](SPEC.md)
+- **M0 slice started:** optional local FastAPI health/readiness (`pip install -e ".[api]"`, `atticus-api`), structured errors, telemetry hooks — see ADR-010
+- Bounded orchestrator, policy engine, run/approval APIs, traces/evals still planned per [`SPEC.md`](SPEC.md)
 - Engineering bar in [`docs/SHARED_ENGINEERING_STANDARD.md`](docs/SHARED_ENGINEERING_STANDARD.md)
 - Honest capability map in [`docs/PORTFOLIO_ALIGNMENT.md`](docs/PORTFOLIO_ALIGNMENT.md)
 
-Do not present FastAPI, Postgres, Next.js, sandboxes, or M0–M5 as already complete.
+Do not present Postgres, Next.js, sandboxes, OTel exporters, or M1–M5 as already complete. M0 is a vertical slice, not the full shared-standard CI/telemetry bar.
 
 ## North star
 
@@ -154,7 +155,18 @@ Slash commands in the CLI: `/help`, `/exit`, `/provider` (`openai` | `anthropic`
 - **Phase 8 — Integrations:** **`/gh`**, **`/gmail`**, **`/cal`** (Calendar read/write with double-confirm), **`/open`**, **`/browse`** + **`/citations`** (fetch + local citation JSON; optional host allowlist). Google APIs: `pip install -e ".[gmail]"` + OAuth client JSON (see `docs/API_KEYS_SETUP.md`).
 - **Phase 9 — Desk/tray:** install **`pip install -e ".[desktop]"`**. Run **`atticus-desktop`** for a read-only status desk, **`atticus-desktop tray`** for the Windows tray, and **`atticus-desktop autostart status|enable|disable`** for confirmation-gated Startup-folder management. Full chat stays **`python -m atticus`**.
 
-JS-heavy browser automation and a full GUI chat are **not** finished here. Track B platform pieces (API, orchestrator, traces, EvalForge) are documented in `SPEC.md` and are also **not** finished. See [`docs/DESKTOP_WINDOWS.md`](docs/DESKTOP_WINDOWS.md).
+JS-heavy browser automation and a full GUI chat are **not** finished here. Track B run/approval APIs, orchestrator, traces, and EvalForge remain unfinished. See [`docs/DESKTOP_WINDOWS.md`](docs/DESKTOP_WINDOWS.md).
+
+### Track B API (M0 health slice)
+
+```powershell
+pip install -e ".[api]"
+atticus-api
+# GET http://127.0.0.1:8000/health/live
+# GET http://127.0.0.1:8000/health/ready
+```
+
+OpenAPI docs stay off unless `api.docs_enabled: true`. Conversations/runs are not exposed yet.
 
 ### Full product — one step at a time (backlog)
 
@@ -167,6 +179,7 @@ JS-heavy browser automation and a full GUI chat are **not** finished here. Track
 7. **Done:** Browser fetch helper + citation capture (`/browse`, `/citations`).
 8. **Done:** Phase 7 deepen — patch plan/apply + gated pytest (`/patch`, `/test`).
 9. **Done:** Windows tray, confirmation-gated autostart, and a read-only desktop status view.
-10. **Next good step:** Track B **M0** vertical slice (typed health/readiness API + structured errors/telemetry hooks), while retaining Track A CLI compatibility.
+10. **Done (M0 slice):** local health/readiness API + structured errors + telemetry hooks (`.[api]`, `atticus-api`).
+11. **Next good step:** Track B **M1** — persisted bounded run API (create/get/cancel) atop the health API, still keeping the Track A CLI.
 
 Do not add real keys to `.env.example`. Keep `.env` and `config/atticus.yaml` out of git if they contain secrets or machine-specific paths.

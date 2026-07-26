@@ -224,7 +224,7 @@ Defined in root `SPEC.md`. These are **planned**. Do not mark complete without a
 
 | Milestone | Goal | Exit criteria (summary) | Status |
 |-----------|------|-------------------------|--------|
-| M0 | Repo/platform skeleton | Typed config, API health/readiness, CI/telemetry baseline | Not started as platform rewrite (Track A config + pytest CI exist) |
+| M0 | Repo/platform skeleton | Typed config, API health/readiness, CI/telemetry baseline | **Partial** — health/ready API + structured errors + telemetry hooks shipped (ADR-010); full CI bar / OTel exporter still open |
 | M1 | Conversation + provider + bounded run | Persisted run with cancel/failure semantics | Partial via CLI chat only |
 | M2 | Read tools + citations | File/search tools with structured provenance | Partial via `/file` and `/code-search` |
 | M3 | Policy + write + approvals + audit | First-class policy decisions and approval workflow | Partial via permission classes + y/N + audit table |
@@ -237,4 +237,4 @@ Research three current RAG-evaluation approaches, save cited findings, create a 
 
 ### Recommended Track B entry
 
-When Boss asks to advance the portfolio track, start with the smallest **M0** vertical slice and record assumptions in ADRs. Prefer evolving existing `atticus/` seams over a greenfield rewrite. Details: `docs/PORTFOLIO_ALIGNMENT.md`.
+M0 health/readiness slice is in progress (ADR-010). Next portfolio step is **M1**: persisted bounded run API with cancel/failure semantics, evolving `atticus/` rather than a greenfield rewrite. Details: `docs/PORTFOLIO_ALIGNMENT.md`.
