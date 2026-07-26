@@ -34,7 +34,7 @@ def startup_directory(
     platform = platform or sys.platform
     if platform != "win32":
         raise WorkspaceError("Atticus autostart is currently supported on Windows only.")
-    values = env or os.environ
+    values = env if env is not None else os.environ
     appdata = values.get("APPDATA", "").strip()
     if not appdata:
         raise WorkspaceError("APPDATA is not set; cannot locate the Windows Startup folder.")
