@@ -30,6 +30,15 @@ Track A packaging milestone (personal assistant), not Track B M0–M5 completion
 
 - Instruction pack at repo root (rules, docs, prompts, config)
 
-## Unreleased documentation
+## Unreleased
+
+### Track B M0 slice
+
+- Optional FastAPI health/readiness API (`pip install -e ".[api]"`, `atticus-api`)
+- Structured `AtticusError` payloads and correlation-ID middleware
+- Lightweight telemetry hooks with secret redaction (no OTel exporter yet)
+- Typed `api` / `telemetry` config; ADR-010
+
+### Documentation
 
 - Dual-track reconciliation: `SPEC.md`, `docs/SHARED_ENGINEERING_STANDARD.md`, `docs/PORTFOLIO_ALIGNMENT.md`, evaluation/model/data cards, ADR-009

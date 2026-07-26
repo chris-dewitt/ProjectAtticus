@@ -5,7 +5,7 @@
 - **Current implementation (Track A):** modular local CLI assistant under `atticus/` — Rich interface, orchestration helpers, OpenAI provider, SQLite memory, permission-gated tools, optional voice/desktop. This section below describes that shape.
 - **Target platform (Track B):** bounded orchestrator, policy engine, typed API, traces/replay, and evaluation hooks described in root [`SPEC.md`](../SPEC.md). See [`PORTFOLIO_ALIGNMENT.md`](PORTFOLIO_ALIGNMENT.md) for what is shipped vs planned.
 
-Do not assume FastAPI, Postgres, Next.js, or a `src/` layout exist in the tree today.
+Do not assume Postgres, Next.js, or a `src/` layout exist in the tree today. An optional FastAPI health API exists under `atticus/api/` (M0 slice; ADR-010) — not a full runs/approvals platform.
 
 ## Architectural thesis
 
@@ -21,12 +21,18 @@ ProjectAtticus/
     __init__.py
     __main__.py
     app.py
+    api/                 # Track B M0: health/ready only (optional .[api])
+      app.py
+      health.py
+      schemas.py
+      errors.py
+    api_server.py
     core/
       config.py
       persona.py
       router.py
       permissions.py
-      logging.py
+      telemetry.py
       errors.py
     providers/
       base.py

@@ -79,4 +79,26 @@ Implications:
 2. `docs/SHARED_ENGINEERING_STANDARD.md` stack defaults (FastAPI, Postgres, Next.js, Docker, OTel, Azure) are aspirational until a later ADR adopts each piece.
 3. Current layout (`atticus/`, `docs/`, `prompts/`) stays until an explicit migration ADR; do not silently move to `src/`.
 4. Agents must read `docs/PORTFOLIO_ALIGNMENT.md` before claiming milestone completion.
-5. Do not present Track B M0–M5 as shipped.
+5. Do not present Track B M0–M5 as fully shipped; claim only slices with acceptance evidence.
+
+## ADR-010 — Track B M0 local health API without rewriting Track A
+
+Decision: add an optional FastAPI health/readiness surface under `atticus/api/`, installed via `.[api]` and launched with `atticus-api`, while keeping the Rich CLI as the primary Track A product.
+
+Includes in this slice:
+
+- `GET /health/live` and `GET /health/ready` (plus `/ready` alias)
+- structured `AtticusError` fields (`code`, `message`, `safe_details`, `status_code`)
+- lightweight telemetry hooks (correlation ID, redacted in-process events; no OTel exporter yet)
+- typed `api` and `telemetry` config blocks
+- CI install of `.[dev,api]` so API tests run on Windows
+
+Reason: SPEC M0 requires API health, typed config, and a telemetry baseline. A greenfield `src/` + Postgres rewrite would discard a working assistant. Evolving `atticus/` keeps privacy/approval rules intact.
+
+Implications:
+
+1. FastAPI/Uvicorn are optional dependencies, not required for Track A CLI.
+2. API binds to `127.0.0.1` by default; OpenAPI docs off by default.
+3. Conversations, runs, approvals, and traces remain future milestones (start with M1 bounded runs).
+4. Broader shared-standard CI (ruff/mypy/security/container) and OTel export need later ADRs.
+5. Update `docs/PORTFOLIO_ALIGNMENT.md` when claiming further M0/M1 progress.

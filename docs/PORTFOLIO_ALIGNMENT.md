@@ -48,21 +48,21 @@ Track B is **not started as a platform rewrite**. Do not present FastAPI, Postgr
 
 | Track A phase | Status (approx.) | Related Track B intent | Gap vs SPEC |
 |---------------|------------------|------------------------|-------------|
-| Phase 0 repo foundation | Complete | M0 docs/CI skeleton | Missing full CI bar (lint/type/security/container), OTel |
-| Phase 1 CLI + OpenAI | Complete | M1 conversation + provider | No persisted bounded run API; Claude/Gemini stubs |
+| Phase 0 repo foundation | Complete | M0 docs/CI skeleton | Missing full CI bar (lint/type/security/container), OTel exporter |
+| Phase 1 CLI + OpenAI | Complete | M1 conversation + provider | No persisted bounded run API |
 | Phase 2 memory + approvals | Complete | M3/M4 memory + audit | No policy engine object model; no approval API; no retention metadata |
 | Phase 3 TTS | Complete (optional) | Out of Track B MVP (voice after MVP) | N/A |
 | Phase 4–5 PTT/wake | Complete (optional extras) | Out of Track B MVP | Ambient continuous wake not implemented |
 | Phase 6 file tools | MVP complete | M2 read tools + citations | Provenance/citation model incomplete; no structured citation artifacts |
-| Phase 7 coding/git | Partial | M2/M3 tools | Read-only git allowlist only; no patch apply / sandbox / test runner |
-| Phase 8 integrations | Partial | M3 external writes | GitHub list/read + `/open`; no issue-draft publish flow; Gmail/Calendar stubs |
-| Phase 9 desktop | Thin preview | Track B web UI later | No tray/autostart; Textual is status hub only |
+| Phase 7 coding/git | Partial | M2/M3 tools | Patch/test allowlists exist; sandbox still open |
+| Phase 8 integrations | Partial | M3 external writes | Gmail/Calendar/browse exist; no issue-draft publish flow |
+| Phase 9 desktop | Partial | Track B web UI later | Tray/autostart exist; full GUI chat still open |
 
 ### Milestone checklist (Track B)
 
 | Milestone | Exit criteria (SPEC) | Already covered by Track A? | Still needed |
 |-----------|----------------------|-----------------------------|--------------|
-| M0 | Skeleton, typed config, API health, CI, telemetry | Partial (config, pytest CI) | Health/readiness API, broader CI, telemetry |
+| M0 | Skeleton, typed config, API health, CI, telemetry | Partial + M0 health slice (`atticus-api`, structured errors, telemetry hooks) | Broader CI (lint/type/security), OTel exporter |
 | M1 | Conversation, provider, persisted bounded run | Partial (CLI chat + OpenAI) | Run persistence, cancel, provider capability metadata |
 | M2 | Read-only file/search + citations | Partial (`/file`, `/code-search`) | Citation/provenance schema, structured artifacts |
 | M3 | Policy engine, write tool, approvals, audit | Partial (permission classes, y/N, audit table, file write) | First-class policy decisions, approval API, idempotency |
@@ -86,7 +86,7 @@ Track A today can support pieces (`/file`, memory notes, `/gh` read APIs, approv
 
 Portfolio reviewers and agents must **not** claim these as done:
 
-- FastAPI (or other) typed HTTP API for conversations/runs/approvals/traces
+- Typed HTTP API for conversations/runs/approvals/traces (health/ready only in M0)
 - Next.js (or other) production web UI
 - PostgreSQL / Redis / object storage / Docker Compose local stack
 - Bounded orchestrator with persisted checkpoints and cancel
@@ -95,15 +95,17 @@ Portfolio reviewers and agents must **not** claim these as done:
 - Idempotency records for approved mutating tool calls
 - Trace viewer / replay UI
 - EvalForge integration, golden/adversarial eval suites, cost/latency baselines
-- OpenTelemetry-compatible distributed tracing
+- OpenTelemetry exporter / distributed tracing (hooks exist; no exporter yet)
 - Terraform / Azure deployment
 - Automatic multi-provider routing with recorded fallback
-- Full Anthropic and Gemini provider implementations
 
 ## Compatible overlaps (build on these)
 
 When extending the repo toward Track B, prefer evolving these existing seams:
 
+- `atticus/api/` — FastAPI factory, health/ready, structured error mapping
+- `atticus/core/telemetry.py` — correlation IDs + redacted event sink
+- `atticus/core/errors.py` — structured `AtticusError` fields
 - `atticus/providers/base.py` — LLM provider protocol
 - `atticus/core/permissions.py` + `atticus/core/approvals.py` + `tool_approvals` audit table
 - `atticus/core/tool_request.py` — tool call request shape

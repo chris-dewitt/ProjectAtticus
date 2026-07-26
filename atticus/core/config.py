@@ -197,6 +197,39 @@ class ToolsConfig(BaseModel):
     github: ToolsGitHubConfig = Field(default_factory=ToolsGitHubConfig)
 
 
+class ApiConfig(BaseModel):
+    """Optional Track B local HTTP API (health/readiness in M0)."""
+
+    model_config = ConfigDict(extra="ignore")
+    enabled: bool = False
+    host: str = "127.0.0.1"
+    port: int = 8000
+    docs_enabled: bool = False
+
+
+class TelemetryConfig(BaseModel):
+    """Lightweight telemetry hooks; OTel exporter is deferred."""
+
+    model_config = ConfigDict(extra="ignore")
+    enabled: bool = True
+    service_name: str = "project-atticus"
+    environment: str = "local"
+    log_level: str = "INFO"
+    emit_stderr: bool = False
+    redact_keys: list[str] = Field(
+        default_factory=lambda: [
+            "api_key",
+            "authorization",
+            "password",
+            "secret",
+            "token",
+            "access_token",
+            "refresh_token",
+            "client_secret",
+        ]
+    )
+
+
 class AppConfig(BaseModel):
     model_config = ConfigDict(extra="ignore")
     assistant: AssistantConfig = Field(default_factory=AssistantConfig)
@@ -205,6 +238,8 @@ class AppConfig(BaseModel):
     memory: MemoryConfig = Field(default_factory=MemoryConfig)
     voice: VoiceConfig = Field(default_factory=VoiceConfig)
     tools: ToolsConfig = Field(default_factory=ToolsConfig)
+    api: ApiConfig = Field(default_factory=ApiConfig)
+    telemetry: TelemetryConfig = Field(default_factory=TelemetryConfig)
 
 
 def resolve_config_path() -> Path:
