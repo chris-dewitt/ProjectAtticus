@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-import json
 import re
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from html.parser import HTMLParser
 from pathlib import Path
@@ -13,10 +12,14 @@ from urllib.parse import urlparse
 import httpx
 
 from atticus.core.errors import WorkspaceError
+from atticus.services import citations as cite_svc
+from atticus.services.citations import CitationRecord
 
 
 @dataclass(frozen=True)
 class PageCitation:
+    """Legacy browse citation shape (still returned for CLI compatibility)."""
+
     url: str
     title: str
     retrieved_at: str
@@ -24,6 +27,7 @@ class PageCitation:
     status_code: int
     content_type: str
     saved_path: str | None = None
+    citation_id: str | None = None
 
 
 class _TextExtractor(HTMLParser):
@@ -154,14 +158,31 @@ def fetch_page(
 
 
 def save_citation(citation: PageCitation, citation_dir: Path) -> PageCitation:
-    citation_dir.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.now(tz=UTC).strftime("%Y%m%dT%H%M%SZ")
-    host = (urlparse(citation.url).hostname or "page").replace(":", "_")
-    path = citation_dir / f"{stamp}_{host}.json"
-    payload = asdict(citation)
-    payload["saved_path"] = str(path)
-    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-    return PageCitation(**payload)
+    """Persist a structured v1 citation and return a legacy-compatible view."""
+    truncated = citation.excerpt.endswith("…")
+    record = cite_svc.from_web_page(
+        url=citation.url,
+        title=citation.title,
+        excerpt=citation.excerpt,
+        status_code=citation.status_code,
+        content_type=citation.content_type,
+        truncated=truncated,
+    )
+    saved = cite_svc.save_record(record, citation_dir)
+    return PageCitation(
+        url=citation.url,
+        title=citation.title,
+        retrieved_at=saved.retrieved_at,
+        excerpt=citation.excerpt,
+        status_code=citation.status_code,
+        content_type=citation.content_type,
+        saved_path=saved.saved_path,
+        citation_id=saved.id,
+    )
+
+
+def save_structured_citation(record: CitationRecord, citation_dir: Path) -> CitationRecord:
+    return cite_svc.save_record(record, citation_dir)
 
 
 def list_citations(citation_dir: Path, *, limit: int = 20) -> list[Path]:
@@ -169,3 +190,7 @@ def list_citations(citation_dir: Path, *, limit: int = 20) -> list[Path]:
         return []
     files = sorted(citation_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
     return files[: max(1, limit)]
+
+
+def list_citation_records(citation_dir: Path, *, limit: int = 20) -> list[CitationRecord]:
+    return cite_svc.list_records(citation_dir, limit=limit)

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark" />
+  <title>ATTICUS // TERMINAL</title>
+  <link rel="stylesheet" href="/ui/styles.css" />
+</head>
+<body>
+  <div class="crt">
+    <div class="scanlines" aria-hidden="true"></div>
+    <div class="bezel">
+      <header class="top">
+        <div class="brand-block">
+          <p class="brand">ATTICUS</p>
+          <p class="tag">LOCAL-FIRST TERMINAL · BOSS CHANNEL</p>
+        </div>
+        <div class="status" id="link-status">LINK …</div>
+      </header>
+
+      <main class="screen">
+        <section class="panel log" id="log" aria-live="polite"></section>
+
+        <section class="panel compose">
+          <label class="prompt-label" for="prompt">boss@atticus:~$</label>
+          <textarea
+            id="prompt"
+            rows="2"
+            maxlength="4000"
+            placeholder="type a message — enter to send, shift+enter for newline"
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck="false"
+          ></textarea>
+          <div class="actions">
+            <button type="button" id="send-btn">TRANSMIT</button>
+            <button type="button" id="new-btn" class="ghost">NEW SESSION</button>
+            <button type="button" id="cite-btn" class="ghost">CITATIONS</button>
+          </div>
+        </section>
+
+        <section class="panel side" id="side">
+          <h2>SYSTEM</h2>
+          <pre id="sys"></pre>
+          <h2>CITATIONS</h2>
+          <pre id="cites">// none loaded</pre>
+        </section>
+      </main>
+
+      <footer class="foot">
+        <span id="session">session: —</span>
+        <span>provider: mock|openai via /v1</span>
+      </footer>
+    </div>
+  </div>
+  <script src="/ui/app.js"></script>
+</body>
+</html>

@@ -4,7 +4,7 @@
 
 **Track A (shipped):** A Windows-first, local-first personal assistant named Atticus. He is a full-character Southern gentleman advisor who responds to Boss, uses OpenAI by default, supports Claude/Gemini later, remembers summaries/preferences, speaks/listens through optional local voice components, and runs permissioned local tools when enabled.
 
-**Track B (in progress):** A secure local-first agent platform (policy, bounded runs, traces, evals) defined in root `SPEC.md`. M0 health API + M1 bounded runs exist (`atticus/api/`, `atticus/runs/`, ADR-010/011); approvals/traces/evals are not shipped. See `docs/PORTFOLIO_ALIGNMENT.md`.
+**Track B (in progress):** A secure local-first agent platform (policy, bounded runs, traces, evals) defined in root `SPEC.md`. M0–M2 slices exist (health, bounded runs, citations, retro `/ui`; ADR-010–012). Approvals API/traces/evals are not shipped. See `docs/PORTFOLIO_ALIGNMENT.md`.
 
 ## Required reading order
 
@@ -48,9 +48,9 @@ Track A extensions (typical):
 
 Track B (only if Boss names a milestone):
 
-- M0 remainders: broader CI (lint/type/security), optional OTel exporter ADR;
-- M1 remainders: async run workers, provider capability metadata;
-- **M2 preferred next:** structured citations/provenance for read tools;
+- M0/M1 remainders: broader CI, OTel exporter, async run workers;
+- M2 remainders: run↔citation linkage, read-tool execute APIs;
+- **M3 preferred next:** first-class policy/approval API objects;
 - evolve existing seams in `atticus/` rather than inventing a parallel tree.
 
 ## Completion report format

@@ -50,6 +50,8 @@ api:
   host: "127.0.0.1"
   port: 8000
   docs_enabled: false
+  # Retro terminal UI at /ui (phone: atticus-api --host 0.0.0.0 on trusted LAN only)
+  ui_enabled: true
   runs_sqlite_path: "data/atticus_runs.sqlite3"
   max_messages_per_run: 32
   include_system_prompt: true
