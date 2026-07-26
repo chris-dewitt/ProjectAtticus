@@ -27,6 +27,7 @@ from atticus.core.telemetry import (
 )
 from atticus.providers.base import LLMProvider
 from atticus.providers.mock_provider import MockProvider
+from atticus.policy.dispatch import ToolGateway
 from atticus.policy.engine import PolicyEngine
 from atticus.policy.service import PolicyService
 from atticus.policy.store import ApprovalStore
@@ -69,10 +70,11 @@ def create_app(
     redoc_url = "/redoc" if config.api.docs_enabled else None
     app = FastAPI(
         title="ProjectAtticus API",
-        version="0.4.0",
+        version="0.5.0",
         description=(
             "Track B local API: health, bounded runs, citations, policy/approvals, "
-            "and optional retro /ui. Traces remain a later milestone."
+            "idempotent approved-tool dispatch, and optional retro /ui. "
+            "Traces remain a later milestone."
         ),
         docs_url=docs_url,
         redoc_url=redoc_url,
@@ -100,6 +102,7 @@ def create_app(
         approval_store,
         approval_ttl_seconds=config.policy.approval_ttl_seconds,
     )
+    app.state.tool_gateway = ToolGateway(config, approval_store)
 
     if provider_factory is None:
         router = ProviderRouter(config)

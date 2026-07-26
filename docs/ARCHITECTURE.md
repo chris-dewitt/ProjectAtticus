@@ -33,11 +33,12 @@ ProjectAtticus/
       models.py
       store.py
       orchestrator.py
-    policy/              # Track B M3: decisions, approvals, audit
+    policy/              # Track B M3: decisions, approvals, audit, dispatch
       models.py
       engine.py
       service.py
       store.py
+      dispatch.py
     core/
       config.py
       persona.py

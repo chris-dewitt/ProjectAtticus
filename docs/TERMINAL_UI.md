@@ -42,5 +42,7 @@ Warnings:
   memory, then shows pending requests
 - Approve/deny prompts for an exact digest phrase; the token is never written
   to local storage
+- Approved requests can **EXECUTE** through the gateway (prompts for
+  `Idempotency-Key`)
 
 Config flag: `api.ui_enabled` (default `true`). Set `false` to serve API-only.

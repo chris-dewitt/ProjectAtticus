@@ -32,6 +32,13 @@ Track A packaging milestone (personal assistant), not Track B M0–M5 completion
 
 ## Unreleased
 
+### Track B M3 idempotent dispatch
+
+- `ToolGateway` executes only approved actions
+- `POST /v1/approvals/{id}/execute` with required `Idempotency-Key`
+- SQLite idempotency ledger; handlers for `local_echo` and `file_write`
+- Retro UI EXECUTE for approved requests; ADR-014
+
 ### Track B M3 policy / approvals
 
 - Deterministic `atticus/policy/` engine (allow/deny/require approval)

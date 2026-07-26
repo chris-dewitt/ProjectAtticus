@@ -175,5 +175,31 @@ Implications:
 2. The retro UI displays pending requests and prompts for exact phrase + token;
    it does not store the token.
 3. Policy/audit SQLite defaults to `data/atticus_approvals.sqlite3`.
-4. Tool execution is not yet automatically dispatched after approval; M3
-   remainder is coupling approved requests to an idempotent tool gateway.
+4. Tool execution after approval is handled by ADR-014 (idempotent gateway).
+
+## ADR-014 — Idempotent approved-tool dispatch gateway
+
+Decision: add `atticus/policy/dispatch.ToolGateway` and
+`POST /v1/approvals/{id}/execute` so only previously approved actions can run,
+and repeated calls with the same `Idempotency-Key` return the original result.
+
+Includes:
+
+- Persist exact approved intent (`inputs`, `resource`, flags) on approval rows
+- Recompute/verify action digest before execution
+- SQLite `idempotency_records` ledger keyed by `Idempotency-Key`
+- Initial handlers: `local_echo` (safe fixture) and `file_write` (approved paths)
+- Terminal UI EXECUTE for approved requests with prompted idempotency key
+
+Reason: SPEC requires approved mutating tool calls to be idempotent and forbids
+execution without an allow/approval decision. This closes the M3 execution
+bridge without inventing a parallel tool system.
+
+Implications:
+
+1. Execute requires approval token + `Idempotency-Key`.
+2. Only registered handlers are dispatchable; unknown tools return
+   `tool_not_dispatchable`.
+3. Replay never re-runs side effects for the same key.
+4. Broader tool coverage (gmail/calendar/git) remains incremental.
+5. Next major Track B step is M4 traces/replay.

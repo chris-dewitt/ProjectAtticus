@@ -120,7 +120,8 @@ Schema version: `atticus.citation.v1` (stable id, kind, source URI, sha256, evid
 | GET | `/v1/approvals` | List requests; filter `?status=pending` |
 | GET | `/v1/approvals/{id}` | Inspect exact action digest and lifecycle |
 | POST | `/v1/approvals/{id}/decision` | Approve/deny (token + exact phrase required) |
-| POST | `/v1/approvals/{id}/execution` | Record approved action result |
+| POST | `/v1/approvals/{id}/execution` | Manually record approved action result |
+| POST | `/v1/approvals/{id}/execute` | Gateway-dispatch the approved action (`Idempotency-Key` required) |
 | GET | `/v1/audit/policy` | Read policy audit (token required) |
 
 Before decisions work, create a long random local secret:
@@ -139,13 +140,14 @@ Decision calls additionally require:
   `DENY <confirmation_hint>`
 
 The terminal UI's **AUTH APPROVALS** control holds the token only in page memory,
-then displays pending requests and asks for the exact phrase when deciding. It
-never writes the token to local storage. Policy input values are included in
-the action digest but are not copied into policy/audit rows.
+then displays pending/approved requests. Decide with the exact phrase; EXECUTE
+prompts for an `Idempotency-Key`. The token is never written to local storage.
+
+Dispatchable tools in this slice: `local_echo`, `file_write` (approved paths).
 
 ## Out of scope (later milestones)
 
-- Idempotent automatic tool dispatch after approval (M3 remainder)
+- Broader gateway handlers (gmail/calendar/git/patch)
 - Trace viewer / replay UI (M4)
 - EvalForge suites (M5)
 - Postgres / Redis / Docker Compose

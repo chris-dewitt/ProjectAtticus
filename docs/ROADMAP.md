@@ -227,7 +227,7 @@ Defined in root `SPEC.md`. These are **planned**. Do not mark complete without a
 | M0 | Repo/platform skeleton | Typed config, API health/readiness, CI/telemetry baseline | **Partial** — health/ready API + structured errors + telemetry hooks shipped (ADR-010); full CI bar / OTel exporter still open |
 | M1 | Conversation + provider + bounded run | Persisted run with cancel/failure semantics | **Partial** — `/v1/conversations` + `/v1/runs` + checkpoints/cancel/idempotency (ADR-011); async workers / capability metadata still open |
 | M2 | Read tools + citations | File/search tools with structured provenance | **Partial** — `atticus.citation.v1` for browse/file/code-search + `/v1/citations` + retro `/ui` (ADR-012); richer span locators / run linkage still open |
-| M3 | Policy + write + approvals + audit | First-class policy decisions and approval workflow | **Partial** — deterministic decisions, action digests, token-gated approvals, expiry + audit (ADR-013); idempotent tool dispatch still open |
+| M3 | Policy + write + approvals + audit | First-class policy decisions and approval workflow | **Partial** — decisions/approvals (ADR-013) + idempotent approved-tool dispatch (ADR-014); broader tool handlers still open |
 | M4 | Memory controls + sandbox + replay + traces | Inspectable plans/tools/approvals/artifacts | Partial memory controls only |
 | M5 | Evals + routing + demo + deploy docs | Signature demo + adversarial/golden evals | Not started |
 
@@ -237,7 +237,7 @@ Research three current RAG-evaluation approaches, save cited findings, create a 
 
 ### Recommended Track B entry
 
-M0–M3 slices are in progress (ADR-010–013): health, bounded runs, citations,
-retro UI, deterministic policy, and durable approvals. Next portfolio step is
-the **M3 execution bridge** (idempotent approved tool dispatch), then M4
-trace/replay. Details: `docs/PORTFOLIO_ALIGNMENT.md`.
+M0–M3 slices are in progress (ADR-010–014): health, bounded runs, citations,
+retro UI, deterministic policy, durable approvals, and idempotent dispatch.
+Next portfolio step is **M4** traces/replay (or broader gateway handlers).
+Details: `docs/PORTFOLIO_ALIGNMENT.md`.

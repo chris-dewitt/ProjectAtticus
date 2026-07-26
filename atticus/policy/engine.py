@@ -82,6 +82,8 @@ def _risk_for(intent: PolicyInput) -> RiskLevel:
 def _tool_enabled(cfg: AppConfig, tool_name: str) -> bool:
     """Best-effort mapping; unknown tools remain policy-visible but denied."""
     key = tool_name.lower()
+    if key == "local_echo":
+        return cfg.tools.enabled
     if key.startswith(("file_", "code_search", "summarize_file")):
         return cfg.tools.files.enabled
     if key.startswith(("git", "patch", "test", "shell")):

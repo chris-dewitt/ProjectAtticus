@@ -65,7 +65,7 @@ Track B is **not started as a platform rewrite**. Do not present FastAPI, Postgr
 | M0 | Skeleton, typed config, API health, CI, telemetry | Partial + M0 health slice (`atticus-api`, structured errors, telemetry hooks) | Broader CI (lint/type/security), OTel exporter |
 | M1 | Conversation, provider, persisted bounded run | Partial + `/v1` conversations/runs (SQLite, checkpoints, cancel, idempotency) | Async workers, richer provider capability metadata |
 | M2 | Read-only file/search + citations | Partial + `atticus.citation.v1` + `/v1/citations` + retro `/ui` | Richer locators, run linkage, read-tool HTTP execute APIs |
-| M3 | Policy engine, write tool, approvals, audit | Partial + deterministic decisions, action digests, token-gated approval API, durable audit | Idempotent approved tool dispatch / action result coupling |
+| M3 | Policy engine, write tool, approvals, audit | Partial + decisions/approvals + idempotent dispatch (`local_echo`, `file_write`) | Broader gateway handlers; richer write-tool coverage |
 | M4 | Memory controls, sandbox, replay, trace viewer | Partial (memory forget/prefs) | Sandbox, replay, trace viewer |
 | M5 | Adversarial evals, routing, demo, deploy docs | Minimal (router skeleton, pytest) | EvalForge suite, real multi-provider routing, signature demo |
 
@@ -92,7 +92,7 @@ Portfolio reviewers and agents must **not** claim these as done:
 - Bounded orchestrator with persisted checkpoints and cancel
 - Policy engine as a first-class decision object
 - Execution sandbox with network policy
-- Idempotency records for approved mutating tool calls
+- Broad idempotent gateway coverage beyond `local_echo` / `file_write`
 - Trace viewer / replay UI
 - EvalForge integration, golden/adversarial eval suites, cost/latency baselines
 - OpenTelemetry exporter / distributed tracing (hooks exist; no exporter yet)
@@ -105,7 +105,7 @@ When extending the repo toward Track B, prefer evolving these existing seams:
 
 - `atticus/api/` — FastAPI factory, health/ready, `/v1` conversations/runs/citations, retro `/ui`
 - `atticus/services/citations.py` — unified citation/provenance records
-- `atticus/policy/` — deterministic policy engine, durable approval/audit store
+- `atticus/policy/` — deterministic policy engine, durable approval/audit store, idempotent `ToolGateway`
 - `atticus/runs/` — FastAPI-independent run store + bounded orchestrator
 - `atticus/core/telemetry.py` — correlation IDs + redacted event sink
 - `atticus/core/errors.py` — structured `AtticusError` fields

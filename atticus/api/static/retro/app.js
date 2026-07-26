@@ -103,13 +103,18 @@
       return;
     }
     try {
-      const data = await api("/v1/approvals?status=pending&limit=12", {
-        headers: { "X-Atticus-Approval-Token": state.approvalToken },
-      });
-      const items = data.items || [];
+      const [pending, approved] = await Promise.all([
+        api("/v1/approvals?status=pending&limit=8", {
+          headers: { "X-Atticus-Approval-Token": state.approvalToken },
+        }),
+        api("/v1/approvals?status=approved&limit=8", {
+          headers: { "X-Atticus-Approval-Token": state.approvalToken },
+        }),
+      ]);
+      const items = [...(pending.items || []), ...(approved.items || [])];
       approvalsEl.replaceChildren();
       if (!items.length) {
-        approvalsEl.textContent = "// no pending requests";
+        approvalsEl.textContent = "// no pending/approved requests";
         return;
       }
       for (const approval of items) {
@@ -138,6 +143,14 @@
         deny.textContent = "DENY";
         deny.addEventListener("click", () => decideApproval(approval, false));
         card.appendChild(deny);
+
+        if (approval.status === "approved") {
+          const execBtn = document.createElement("button");
+          execBtn.type = "button";
+          execBtn.textContent = "EXECUTE";
+          execBtn.addEventListener("click", () => executeApproval(approval));
+          card.appendChild(execBtn);
+        }
         approvalsEl.appendChild(card);
       }
     } catch (err) {
@@ -174,6 +187,39 @@
         }),
       });
       line("system", `approval ${decided.id} :: ${decided.status}`, "system");
+      refreshApprovals();
+    } catch (err) {
+      line("system", String(err.message || err), "error");
+    }
+  }
+
+  async function executeApproval(approval) {
+    if (!state.approvalToken) {
+      line("system", "execute cancelled: auth approvals first", "error");
+      return;
+    }
+    const key =
+      window.prompt("Idempotency-Key for this execution:", crypto.randomUUID()) ||
+      "";
+    if (!key.trim()) {
+      line("system", "execute cancelled: idempotency key required", "error");
+      return;
+    }
+    try {
+      const result = await api(`/v1/approvals/${approval.id}/execute`, {
+        method: "POST",
+        headers: {
+          "X-Atticus-Approval-Token": state.approvalToken,
+          "Idempotency-Key": key.trim(),
+        },
+        body: JSON.stringify({ actor: "atticus" }),
+      });
+      line(
+        "system",
+        `dispatch ${result.approval_id} :: ${result.status}` +
+          (result.replayed ? " (replay)" : ""),
+        "system"
+      );
       refreshApprovals();
     } catch (err) {
       line("system", String(err.message || err), "error");

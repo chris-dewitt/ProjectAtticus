@@ -15,6 +15,7 @@ from atticus.policy.models import (
     ApprovalStatus,
     PolicyDecision,
     PolicyEffect,
+    PolicyInput,
     RiskLevel,
     new_id,
 )
@@ -22,6 +23,16 @@ from atticus.policy.models import (
 
 def _utc_now() -> datetime:
     return datetime.now(tz=UTC)
+
+
+def _sanitize_inputs_for_storage(inputs: dict[str, Any]) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    for key, value in inputs.items():
+        if isinstance(value, str) and len(value) > 200_000:
+            out[key] = value[:200_000] + "…[truncated]"
+        else:
+            out[key] = value
+    return out
 
 
 class ApprovalNotFound(AtticusError):
@@ -86,6 +97,11 @@ class ApprovalStore:
               rationale TEXT,
               execution_result TEXT,
               correlation_id TEXT,
+              inputs_json TEXT NOT NULL DEFAULT '{}',
+              resource TEXT,
+              request_actor TEXT NOT NULL DEFAULT 'boss',
+              external_data INTEGER NOT NULL DEFAULT 0,
+              destructive INTEGER NOT NULL DEFAULT 0,
               FOREIGN KEY (policy_decision_id) REFERENCES policy_decisions(id)
             );
             CREATE INDEX IF NOT EXISTS idx_approvals_status_created
@@ -102,9 +118,34 @@ class ApprovalStore:
             );
             CREATE INDEX IF NOT EXISTS idx_policy_audit_entity
               ON policy_audit_events (entity_type, entity_id, id);
+
+            CREATE TABLE IF NOT EXISTS idempotency_records (
+              idempotency_key TEXT PRIMARY KEY,
+              approval_id TEXT NOT NULL,
+              result_json TEXT NOT NULL,
+              created_at TEXT NOT NULL,
+              FOREIGN KEY (approval_id) REFERENCES approval_requests(id)
+            );
             """
         )
+        self._migrate_approval_columns()
         self._conn.commit()
+
+    def _migrate_approval_columns(self) -> None:
+        cols = {
+            str(row[1])
+            for row in self._conn.execute("PRAGMA table_info(approval_requests)").fetchall()
+        }
+        migrations = {
+            "inputs_json": "ALTER TABLE approval_requests ADD COLUMN inputs_json TEXT NOT NULL DEFAULT '{}'",
+            "resource": "ALTER TABLE approval_requests ADD COLUMN resource TEXT",
+            "request_actor": "ALTER TABLE approval_requests ADD COLUMN request_actor TEXT NOT NULL DEFAULT 'boss'",
+            "external_data": "ALTER TABLE approval_requests ADD COLUMN external_data INTEGER NOT NULL DEFAULT 0",
+            "destructive": "ALTER TABLE approval_requests ADD COLUMN destructive INTEGER NOT NULL DEFAULT 0",
+        }
+        for name, sql in migrations.items():
+            if name not in cols:
+                self._conn.execute(sql)
 
     def record_decision(self, decision: PolicyDecision) -> PolicyDecision:
         self._conn.execute(
@@ -146,11 +187,17 @@ class ApprovalStore:
         self,
         decision: PolicyDecision,
         *,
+        intent: PolicyInput,
         ttl_seconds: int,
     ) -> ApprovalRequest:
         if decision.effect != PolicyEffect.REQUIRE_APPROVAL:
             raise ApprovalConflict(
                 f"Policy effect is {decision.effect.value}; no approval request is needed.",
+                safe_details={"policy_decision_id": decision.id},
+            )
+        if intent.action_digest != decision.action_digest:
+            raise ApprovalConflict(
+                "Intent digest does not match policy decision digest.",
                 safe_details={"policy_decision_id": decision.id},
             )
         now = _utc_now()
@@ -165,14 +212,20 @@ class ApprovalStore:
             status=ApprovalStatus.PENDING,
             created_at=now.isoformat(),
             expires_at=(now + timedelta(seconds=max(30, ttl_seconds))).isoformat(),
+            inputs=_sanitize_inputs_for_storage(intent.inputs),
+            resource=intent.resource,
+            request_actor=intent.actor,
+            external_data=intent.external_data,
+            destructive=intent.destructive,
             correlation_id=decision.correlation_id,
         )
         self._conn.execute(
             """
             INSERT INTO approval_requests (
               id, policy_decision_id, action_digest, tool_name, permission_class,
-              action_summary, risk, status, created_at, expires_at, correlation_id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              action_summary, risk, status, created_at, expires_at, correlation_id,
+              inputs_json, resource, request_actor, external_data, destructive
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 approval.id,
@@ -186,6 +239,11 @@ class ApprovalStore:
                 approval.created_at,
                 approval.expires_at,
                 approval.correlation_id,
+                json.dumps(approval.inputs, sort_keys=True, default=str),
+                approval.resource,
+                approval.request_actor,
+                1 if approval.external_data else 0,
+                1 if approval.destructive else 0,
             ),
         )
         self._audit(
@@ -196,6 +254,7 @@ class ApprovalStore:
             {
                 "action_digest": approval.action_digest,
                 "risk": approval.risk.value,
+                "tool_name": approval.tool_name,
             },
         )
         self._conn.commit()
@@ -341,6 +400,53 @@ class ApprovalStore:
         self._conn.commit()
         return self.get_approval(approval.id)
 
+    def get_idempotency_record(self, key: str) -> dict[str, Any] | None:
+        row = self._conn.execute(
+            """
+            SELECT idempotency_key, approval_id, result_json, created_at
+            FROM idempotency_records
+            WHERE idempotency_key = ?
+            """,
+            (key,),
+        ).fetchone()
+        if row is None:
+            return None
+        return {
+            "idempotency_key": str(row["idempotency_key"]),
+            "approval_id": str(row["approval_id"]),
+            "result": json.loads(row["result_json"]),
+            "created_at": str(row["created_at"]),
+        }
+
+    def put_idempotency_record(
+        self,
+        key: str,
+        *,
+        approval_id: str,
+        result: dict[str, Any],
+    ) -> None:
+        self._conn.execute(
+            """
+            INSERT INTO idempotency_records (
+              idempotency_key, approval_id, result_json, created_at
+            ) VALUES (?, ?, ?, ?)
+            """,
+            (
+                key,
+                approval_id,
+                json.dumps(result, sort_keys=True, default=str),
+                _utc_now().isoformat(),
+            ),
+        )
+        self._audit(
+            "idempotency_recorded",
+            "approval",
+            approval_id,
+            None,
+            {"idempotency_key": key},
+        )
+        self._conn.commit()
+
     def list_audit_events(self, *, limit: int = 100) -> list[dict[str, Any]]:
         rows = self._conn.execute(
             """
@@ -388,6 +494,8 @@ class ApprovalStore:
 
     @staticmethod
     def _row_to_approval(row: sqlite3.Row) -> ApprovalRequest:
+        keys = set(row.keys())
+        inputs_raw = row["inputs_json"] if "inputs_json" in keys else "{}"
         return ApprovalRequest(
             id=str(row["id"]),
             policy_decision_id=str(row["policy_decision_id"]),
@@ -399,6 +507,11 @@ class ApprovalStore:
             status=ApprovalStatus(str(row["status"])),
             created_at=str(row["created_at"]),
             expires_at=str(row["expires_at"]),
+            inputs=json.loads(inputs_raw or "{}"),
+            resource=row["resource"] if "resource" in keys else None,
+            request_actor=str(row["request_actor"]) if "request_actor" in keys and row["request_actor"] else "boss",
+            external_data=bool(row["external_data"]) if "external_data" in keys else False,
+            destructive=bool(row["destructive"]) if "destructive" in keys else False,
             decided_at=row["decided_at"],
             actor=row["actor"],
             rationale=row["rationale"],
