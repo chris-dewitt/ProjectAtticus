@@ -102,3 +102,26 @@ Implications:
 3. Conversations, runs, approvals, and traces remain future milestones (start with M1 bounded runs).
 4. Broader shared-standard CI (ruff/mypy/security/container) and OTel export need later ADRs.
 5. Update `docs/PORTFOLIO_ALIGNMENT.md` when claiming further M0/M1 progress.
+
+## ADR-011 — Track B M1 bounded runs on local SQLite
+
+Decision: add a FastAPI-independent run domain (`atticus/runs/`) with SQLite persistence and a bounded orchestrator, exposed under `/v1/conversations` and `/v1/runs`, reusing provider adapters (including `mock` for tests).
+
+Includes in this slice:
+
+- Conversation + message persistence
+- Bounded run state machine: `queued` → `running` → `succeeded` | `failed` | `cancelled`
+- Persisted checkpoints and cooperative cancel
+- `Idempotency-Key` for create-message / create-run
+- Provider injection via factory (Track A `ProviderRouter` by default; tests inject `MockProvider`)
+- Runs DB path in `api.runs_sqlite_path` (default `data/atticus_runs.sqlite3`)
+
+Reason: SPEC M1 requires a single conversation, provider adapter, and persisted bounded run with cancel/failure semantics. Keeping the domain free of FastAPI preserves the shared engineering rule that domain logic must not depend on web frameworks.
+
+Implications:
+
+1. Track A CLI remains the primary interactive product; the API is optional (`.[api]`).
+2. Run transcripts are stored locally in the runs DB — not copied into Track A memory summaries by default.
+3. Approvals, traces, sandbox, and Postgres remain later milestones.
+4. Live provider calls from the API require real credentials; CI uses `mock` only.
+5. Update portfolio alignment when claiming further M1/M2 progress.

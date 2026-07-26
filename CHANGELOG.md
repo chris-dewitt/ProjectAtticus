@@ -32,6 +32,12 @@ Track A packaging milestone (personal assistant), not Track B M0–M5 completion
 
 ## Unreleased
 
+### Track B M1 slice
+
+- Bounded run domain (`atticus/runs/`) with SQLite persistence and checkpoints
+- `/v1/conversations`, `/v1/messages`, `/v1/runs`, cancel + `Idempotency-Key`
+- Provider factory wiring (live providers or `mock` for tests); ADR-011
+
 ### Track B M0 slice
 
 - Optional FastAPI health/readiness API (`pip install -e ".[api]"`, `atticus-api`)

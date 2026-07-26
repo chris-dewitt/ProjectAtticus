@@ -198,13 +198,16 @@ class ToolsConfig(BaseModel):
 
 
 class ApiConfig(BaseModel):
-    """Optional Track B local HTTP API (health/readiness in M0)."""
+    """Optional Track B local HTTP API (health + bounded runs)."""
 
     model_config = ConfigDict(extra="ignore")
     enabled: bool = False
     host: str = "127.0.0.1"
     port: int = 8000
     docs_enabled: bool = False
+    runs_sqlite_path: str = "data/atticus_runs.sqlite3"
+    max_messages_per_run: int = 32
+    include_system_prompt: bool = True
 
 
 class TelemetryConfig(BaseModel):

@@ -1,25 +1,31 @@
-"""FastAPI application factory for Track B M0 health endpoints."""
+"""FastAPI application factory for Track B health + bounded run APIs."""
 
 from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 
 from atticus.api.errors import atticus_error_handler, unhandled_error_handler
 from atticus.api.health import live_response, load_ready_response
+from atticus.api.runs import build_runs_router
 from atticus.api.schemas import ReadyResponse
-from atticus.core.config import AppConfig, load_app_config
-from atticus.core.errors import AtticusError
+from atticus.core.config import AppConfig, load_app_config, resolve_repo_root
+from atticus.core.errors import AtticusError, ProviderError
+from atticus.core.router import ProviderRouter
 from atticus.core.telemetry import (
     Telemetry,
     bind_correlation_id,
     get_telemetry,
     set_telemetry,
 )
+from atticus.providers.base import LLMProvider
+from atticus.providers.mock_provider import MockProvider
+from atticus.runs.orchestrator import BoundedRunOrchestrator
+from atticus.runs.store import RunStore
 
 
 def create_app(
@@ -27,8 +33,11 @@ def create_app(
     config: AppConfig | None = None,
     config_path: Path | None = None,
     telemetry: Telemetry | None = None,
+    run_store: RunStore | None = None,
+    provider_factory: Callable[[str], LLMProvider] | None = None,
+    default_provider: str | None = None,
 ) -> FastAPI:
-    """Build the Track B API app (health/readiness only in M0)."""
+    """Build the Track B API app (health + M1 conversations/runs)."""
     if config is None:
         config, resolved_path = load_app_config(config_path=config_path)
     else:
@@ -53,8 +62,11 @@ def create_app(
     redoc_url = "/redoc" if config.api.docs_enabled else None
     app = FastAPI(
         title="ProjectAtticus API",
-        version="0.1.0",
-        description="Track B M0 health/readiness API. Conversations/runs are not exposed yet.",
+        version="0.2.0",
+        description=(
+            "Track B local API: health/readiness plus bounded conversation runs. "
+            "Approvals/traces remain later milestones."
+        ),
         docs_url=docs_url,
         redoc_url=redoc_url,
         openapi_url="/openapi.json" if config.api.docs_enabled else None,
@@ -62,9 +74,43 @@ def create_app(
     app.state.config = config
     app.state.config_path = resolved_path
     app.state.service_name = service_name
+    app.state.default_provider = (
+        default_provider or config.providers.routing.default_provider
+    ).lower()
+    app.state.default_mode = config.assistant.default_mode
+
+    if run_store is None:
+        run_store = RunStore(Path(config.api.runs_sqlite_path).expanduser())
+    app.state.run_store = run_store
+
+    if provider_factory is None:
+        router = ProviderRouter(config)
+
+        def _factory(name: str) -> LLMProvider:
+            key = name.lower()
+            if key == "mock":
+                return MockProvider()
+            if key != router.current:
+                try:
+                    router.set_provider(key)
+                except ValueError as exc:
+                    raise ProviderError(str(exc), code="invalid_provider", status_code=400) from exc
+            return router.active_provider()
+
+        provider_factory = _factory
+
+    repo_root = resolve_repo_root(config, config_file=resolved_path)
+    app.state.orchestrator = BoundedRunOrchestrator(
+        run_store,
+        provider_factory=provider_factory,
+        repo_root=repo_root,
+        max_messages=config.api.max_messages_per_run,
+        include_system_prompt=config.api.include_system_prompt,
+    )
 
     app.add_exception_handler(AtticusError, atticus_error_handler)
     app.add_exception_handler(Exception, unhandled_error_handler)
+    app.include_router(build_runs_router())
 
     @app.middleware("http")
     async def correlation_middleware(request: Request, call_next: Any) -> Response:

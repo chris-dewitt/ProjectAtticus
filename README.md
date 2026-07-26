@@ -19,12 +19,12 @@ Package version `1.0.0` labels this Track A milestone. A full GUI chat remains u
 
 **Track B — portfolio agent platform (in progress / planned):**
 
-- **M0 slice started:** optional local FastAPI health/readiness (`pip install -e ".[api]"`, `atticus-api`), structured errors, telemetry hooks — see ADR-010
-- Bounded orchestrator, policy engine, run/approval APIs, traces/evals still planned per [`SPEC.md`](SPEC.md)
+- **M0/M1 slices started:** optional local FastAPI health + bounded runs (`pip install -e ".[api]"`, `atticus-api`) — see ADR-010/011 and [`docs/API.md`](docs/API.md)
+- Policy engine, approvals API, traces/evals, Postgres still planned per [`SPEC.md`](SPEC.md)
 - Engineering bar in [`docs/SHARED_ENGINEERING_STANDARD.md`](docs/SHARED_ENGINEERING_STANDARD.md)
 - Honest capability map in [`docs/PORTFOLIO_ALIGNMENT.md`](docs/PORTFOLIO_ALIGNMENT.md)
 
-Do not present Postgres, Next.js, sandboxes, OTel exporters, or M1–M5 as already complete. M0 is a vertical slice, not the full shared-standard CI/telemetry bar.
+Do not present Postgres, Next.js, sandboxes, OTel exporters, approvals APIs, or M2–M5 as already complete. M0/M1 are vertical slices, not the full shared-standard bar.
 
 ## North star
 
@@ -157,16 +157,20 @@ Slash commands in the CLI: `/help`, `/exit`, `/provider` (`openai` | `anthropic`
 
 JS-heavy browser automation and a full GUI chat are **not** finished here. Track B run/approval APIs, orchestrator, traces, and EvalForge remain unfinished. See [`docs/DESKTOP_WINDOWS.md`](docs/DESKTOP_WINDOWS.md).
 
-### Track B API (M0 health slice)
+### Track B API (M0 health + M1 bounded runs)
 
 ```powershell
 pip install -e ".[api]"
 atticus-api
-# GET http://127.0.0.1:8000/health/live
-# GET http://127.0.0.1:8000/health/ready
+# GET  http://127.0.0.1:8000/health/live
+# GET  http://127.0.0.1:8000/health/ready
+# POST http://127.0.0.1:8000/v1/conversations
+# POST http://127.0.0.1:8000/v1/conversations/{id}/messages
+# GET  http://127.0.0.1:8000/v1/runs/{id}
+# POST http://127.0.0.1:8000/v1/runs/{id}/cancel
 ```
 
-OpenAPI docs stay off unless `api.docs_enabled: true`. Conversations/runs are not exposed yet.
+OpenAPI docs stay off unless `api.docs_enabled: true`. Details: [`docs/API.md`](docs/API.md).
 
 ### Full product — one step at a time (backlog)
 
@@ -180,6 +184,7 @@ OpenAPI docs stay off unless `api.docs_enabled: true`. Conversations/runs are no
 8. **Done:** Phase 7 deepen — patch plan/apply + gated pytest (`/patch`, `/test`).
 9. **Done:** Windows tray, confirmation-gated autostart, and a read-only desktop status view.
 10. **Done (M0 slice):** local health/readiness API + structured errors + telemetry hooks (`.[api]`, `atticus-api`).
-11. **Next good step:** Track B **M1** — persisted bounded run API (create/get/cancel) atop the health API, still keeping the Track A CLI.
+11. **Done (M1 slice):** `/v1/conversations` + `/v1/runs` with checkpoints, cancel, and idempotency (`atticus/runs/`).
+12. **Next good step:** Track B **M2** — structured citations/provenance for read tools (or M1 async workers).
 
 Do not add real keys to `.env.example`. Keep `.env` and `config/atticus.yaml` out of git if they contain secrets or machine-specific paths.
