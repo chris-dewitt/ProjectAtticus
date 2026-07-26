@@ -29,7 +29,7 @@ Secure local-first AI agent platform per root `SPEC.md`:
 - Signature demo: research → comparison table → draft GitHub issue with approval gate
 - Shared engineering standard stack defaults (FastAPI, Postgres, Next.js, Docker, OTel, Azure)
 
-Track B is **not started as a platform rewrite**. Do not present FastAPI, Postgres, Next.js, sandbox execution, idempotency records, or trace viewers as shipped.
+Track B is **not started as a platform rewrite**. Do not present Postgres, Next.js, sandbox execution, full gateway coverage, or trace viewers as shipped.
 
 ## Topic reconciliation
 
