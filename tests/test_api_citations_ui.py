@@ -43,13 +43,23 @@ def test_retro_ui_is_served(client: TestClient) -> None:
     page = client.get("/ui/")
     assert page.status_code == 200
     assert "ATTICUS" in page.text
-    assert "AUTH APPROVALS" in page.text
+    assert 'id="approval-auth-btn"' in page.text
+    assert 'rel="manifest"' in page.text
     css = client.get("/ui/styles.css")
     assert css.status_code == 200
-    assert "--phosphor" in css.text
+    assert "--brass" in css.text
+    assert "--phosphor" in css.text  # compatibility alias
     js = client.get("/ui/app.js")
     assert js.status_code == 200
     assert "authenticateApprovals" in js.text
+    assert "registerServiceWorker" in js.text
+    manifest = client.get("/ui/manifest.webmanifest")
+    assert manifest.status_code == 200
+    assert "Atticus" in manifest.text
+    sw = client.get("/ui/sw.js")
+    assert sw.status_code == 200
+    icon = client.get("/ui/icon.svg")
+    assert icon.status_code == 200
 
 
 def test_citations_api_lists_records(client: TestClient, tmp_path: Path) -> None:

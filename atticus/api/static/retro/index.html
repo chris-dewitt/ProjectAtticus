@@ -4,7 +4,21 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="dark" />
-  <title>ATTICUS // TERMINAL</title>
+  <meta name="theme-color" content="#0b0a09" />
+  <meta name="description" content="Atticus — local-first classical terminal for Boss." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Atticus" />
+  <link rel="manifest" href="/ui/manifest.webmanifest" />
+  <link rel="icon" href="/ui/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/ui/icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap"
+    rel="stylesheet"
+  />
+  <title>ATTICUS</title>
   <link rel="stylesheet" href="/ui/styles.css" />
 </head>
 <body>
@@ -14,7 +28,7 @@
       <header class="top">
         <div class="brand-block">
           <p class="brand">ATTICUS</p>
-          <p class="tag">LOCAL-FIRST TERMINAL · BOSS CHANNEL</p>
+          <p class="tag">Local terminal · Boss channel</p>
         </div>
         <div class="status" id="link-status">LINK …</div>
       </header>
@@ -28,39 +42,40 @@
             id="prompt"
             rows="2"
             maxlength="4000"
-            placeholder="type a message — enter to send, shift+enter for newline"
+            placeholder="message Atticus — enter to send, shift+enter for newline"
             autocomplete="off"
             autocapitalize="off"
             spellcheck="false"
           ></textarea>
           <div class="actions">
-            <button type="button" id="send-btn">TRANSMIT</button>
-            <button type="button" id="new-btn" class="ghost">NEW SESSION</button>
-            <button type="button" id="cite-btn" class="ghost">CITATIONS</button>
-            <button type="button" id="approval-auth-btn" class="ghost">AUTH APPROVALS</button>
-            <button type="button" id="trace-btn" class="ghost">TRACE</button>
-            <button type="button" id="settings-btn" class="ghost">SETTINGS</button>
-            <button type="button" id="demo-btn" class="ghost">SIG DEMO</button>
+            <button type="button" id="send-btn">Send</button>
+            <button type="button" id="new-btn" class="ghost">New</button>
+            <button type="button" id="cite-btn" class="ghost">Citations</button>
+            <button type="button" id="approval-auth-btn" class="ghost">Auth</button>
+            <button type="button" id="trace-btn" class="ghost">Trace</button>
+            <button type="button" id="settings-btn" class="ghost">Settings</button>
+            <button type="button" id="demo-btn" class="ghost">Demo</button>
+            <button type="button" id="install-btn" class="ghost" hidden>Install app</button>
           </div>
         </section>
 
         <section class="panel side" id="side">
-          <h2>SYSTEM</h2>
+          <h2>System</h2>
           <pre id="sys"></pre>
-          <h2>SETTINGS</h2>
+          <h2>Settings</h2>
           <pre id="settings">// loading…</pre>
-          <h2>CITATIONS</h2>
+          <h2>Citations</h2>
           <pre id="cites">// none loaded</pre>
-          <h2>APPROVAL QUEUE</h2>
+          <h2>Approvals</h2>
           <div id="approvals">// no pending requests</div>
-          <h2>LAST TRACE / REPLAY</h2>
-          <pre id="trace">// run a message or SIG DEMO</pre>
+          <h2>Trace / Replay</h2>
+          <pre id="trace">// send a message or run Demo</pre>
         </section>
       </main>
 
       <footer class="foot">
         <span id="session">session: —</span>
-        <span>provider: mock|openai via /v1 · traces · sandbox · demo</span>
+        <span id="install-hint">desktop · phone PWA · local only</span>
       </footer>
     </div>
   </div>

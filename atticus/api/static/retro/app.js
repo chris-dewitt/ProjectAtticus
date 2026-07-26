@@ -13,6 +13,7 @@
   const traceBtn = document.getElementById("trace-btn");
   const settingsBtn = document.getElementById("settings-btn");
   const demoBtn = document.getElementById("demo-btn");
+  const installBtn = document.getElementById("install-btn");
   const linkEl = document.getElementById("link-status");
   const sessionEl = document.getElementById("session");
 
@@ -21,6 +22,7 @@
     lastRunId: localStorage.getItem("atticus.lastRunId") || null,
     approvalToken: null,
     busy: false,
+    deferredInstall: null,
   };
 
   function line(who, text, cls = "") {
@@ -406,8 +408,40 @@
     localStorage.removeItem("atticus.lastRunId");
     sessionEl.textContent = "session: —";
     logEl.innerHTML = "";
-    traceEl.textContent = "// run a message or SIG DEMO";
-    line("system", "new session armed. transmit when ready.", "system");
+    traceEl.textContent = "// send a message or run Demo";
+    line("system", "New session ready when you are, Boss.", "system");
+  }
+
+  function registerServiceWorker() {
+    if (!("serviceWorker" in navigator)) return;
+    navigator.serviceWorker.register("/ui/sw.js").catch(() => {
+      /* offline shell is optional */
+    });
+  }
+
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    state.deferredInstall = event;
+    if (installBtn) installBtn.hidden = false;
+  });
+
+  async function installApp() {
+    if (!state.deferredInstall) {
+      line(
+        "system",
+        "Install via browser menu: Add to Home Screen (phone) or Install app (desktop).",
+        "system"
+      );
+      return;
+    }
+    state.deferredInstall.prompt();
+    try {
+      await state.deferredInstall.userChoice;
+    } catch {
+      /* user dismissed */
+    }
+    state.deferredInstall = null;
+    if (installBtn) installBtn.hidden = true;
   }
 
   sendBtn.addEventListener("click", sendMessage);
@@ -417,6 +451,7 @@
   traceBtn.addEventListener("click", () => refreshTrace());
   settingsBtn.addEventListener("click", editSettings);
   demoBtn.addEventListener("click", runSignatureDemo);
+  if (installBtn) installBtn.addEventListener("click", installApp);
   promptEl.addEventListener("keydown", (event) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
@@ -424,16 +459,17 @@
     }
   });
 
-  line("system", "ATTICUS terminal boot sequence complete.", "system");
+  line("system", "Atticus terminal online.", "system");
   line(
     "system",
-    "Chat · approvals · settings · traces · signature demo. Phone: atticus-api --lan on trusted LAN only.",
+    "Chat, approvals, settings, traces, and demo — local only. Phone: python -m atticus.api_server --lan on a trusted network, then Install app / Add to Home Screen.",
     "system"
   );
   if (state.conversationId) {
     sessionEl.textContent = `session: ${state.conversationId}`;
-    line("system", `resumed session :: ${state.conversationId}`, "system");
+    line("system", `Resumed session :: ${state.conversationId}`, "system");
   }
+  registerServiceWorker();
   refreshSystem();
   refreshSettings();
   refreshCitations();

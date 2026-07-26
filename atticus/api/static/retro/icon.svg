@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Atticus">
+  <rect width="512" height="512" fill="#0b0a09"/>
+  <rect x="48" y="48" width="416" height="416" fill="none" stroke="#b8956c" stroke-width="10"/>
+  <text x="256" y="300" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif"
+        font-size="220" font-weight="600" fill="#e0c9a0">A</text>
+</svg>

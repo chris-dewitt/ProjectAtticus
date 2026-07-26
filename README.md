@@ -16,8 +16,9 @@ Atticus is intentionally built as a serious personal software project: privacy-c
 - Read-only Textual status desk, Windows tray, and confirmation-gated autostart
 
 Package version `1.0.0` labels the Track A personal-assistant packaging milestone.
-The local retro `/ui` now covers GUI chat, approvals, settings, traces, and the
-signature demo; a fuller native desktop chat shell remains optional polish.
+The classical `/ui` terminal covers GUI chat, approvals, settings, traces, and
+the signature demo. Install it as a phone/desktop PWA, or open a native window
+with `python -m atticus.desktop ui` (`pip install -e ".[api,desktop]"`).
 
 **Track B — portfolio agent platform (M0–M5 vertical slices shipped locally):**
 

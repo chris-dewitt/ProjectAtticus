@@ -32,6 +32,13 @@ Track A packaging milestone (personal assistant), not Track B M0–M5 completion
 
 ## Unreleased
 
+### Classical terminal + installable desktop/phone UI
+
+- Subdued brass/amber classical terminal redesign for `/ui`
+- PWA manifest + service worker + Install app affordance
+- `python -m atticus.desktop ui` native/browser shell; tray opens Terminal
+- Docs: `docs/TERMINAL_UI.md`, `docs/DESKTOP_WINDOWS.md`
+
 ### Epic: finish Track A GUI + Track B M0–M5 platform bar
 
 - M4: durable traces, replay reports, Python sandbox, memory/settings APIs
