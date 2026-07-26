@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import mimetypes
 import time
 from pathlib import Path
 from typing import Any, Callable
@@ -10,6 +11,11 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+
+# Ensure PWA assets are served with useful content types on Windows.
+mimetypes.add_type("application/manifest+json", ".webmanifest")
+mimetypes.add_type("image/svg+xml", ".svg")
+mimetypes.add_type("text/javascript", ".js")
 
 from atticus.api.auth import ApiAuthMiddleware, RateLimitMiddleware
 from atticus.api.citations import build_citations_router

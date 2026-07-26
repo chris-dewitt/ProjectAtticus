@@ -1,51 +1,67 @@
-# Atticus retro terminal UI
+# Atticus classical terminal UI
 
-Status: local web terminal for computer/phone (Track B UI slice)
+Status: local web terminal for computer + installable phone/desktop PWA
 
 ## Look and feel
 
-CRT / phosphor-green terminal chrome, monospace type, scanline atmosphere, **ATTICUS** as the brand hero. Same-origin with the local API — no CDN assets.
+Subdued classical terminal: graphite field, soft brass/amber phosphor text,
+IBM Plex Mono, thin rules, restrained motion. **ATTICUS** remains the brand
+hero. Same-origin with the local API.
 
 ## Run (computer)
 
 ```powershell
 cd C:\Users\DELL\Documents\GitHub\ProjectAtticus
 pip install -e ".[api]"
-atticus-api
+python -m atticus.api_server
 ```
 
 Open: `http://127.0.0.1:8000/ui/`
 
-Defaults stay on loopback (`api.host: 127.0.0.1`).
+### Desktop app window
+
+```powershell
+pip install -e ".[api,desktop]"
+python -m atticus.desktop ui
+```
+
+This starts the local API if needed and opens a native window (pywebview) or
+falls back to your browser (`--browser` to force the browser).
+
+Tray shortcut:
+
+```powershell
+python -m atticus.desktop tray
+```
+
+Default tray action: **Open Atticus Terminal**.
 
 ## Run (phone on trusted LAN)
 
 ```powershell
-atticus-api --lan
+python -m atticus.api_server --lan
 ```
 
-Then open `http://<your-pc-lan-ip>:8000/ui/` on the phone.
+On the phone, open `http://<your-pc-lan-ip>:8000/ui/`.
+
+Install as an app:
+
+- **iPhone/Safari:** Share → Add to Home Screen  
+- **Android/Chrome:** menu → Install app / Add to Home Screen  
+- Or tap **Install app** in the terminal when the browser offers it
 
 Warnings:
 
 - `--lan` binds `0.0.0.0` — use only on a network you trust.
-- There is no auth token yet; do not expose to the public internet.
-- Live LLM calls still need provider API keys in the PC environment.
+- Prefer setting `ATTICUS_API_TOKEN` before LAN exposure.
+- Do not expose to the public internet.
+- Live LLM calls still need provider API keys on the PC.
 
 ## What it does
 
-- Creates/resumes a `/v1` conversation session (GUI chat)
-- Sends messages through bounded runs
-- Shows health/ready status and editable settings
-- Lists structured citations from `/v1/citations`
-- Approval queue with AUTH / APPROVE / DENY / EXECUTE
-- TRACE / REPLAY panel for the last run
-- SIG DEMO button for the synthetic signature workflow
-- **AUTH APPROVALS** prompts for `ATTICUS_APPROVAL_TOKEN`, kept only in page
-  memory, then shows pending requests
-- Approve/deny prompts for an exact digest phrase; the token is never written
-  to local storage
-- Approved requests can **EXECUTE** through the gateway (prompts for
-  `Idempotency-Key`)
+- GUI chat through `/v1` bounded runs
+- Health/ready + editable settings
+- Citations, approval queue, trace/replay, signature demo
+- Installable PWA shell (service worker caches `/ui` assets only — never API bodies)
 
-Config flag: `api.ui_enabled` (default `true`). Set `false` to serve API-only.
+Config flag: `api.ui_enabled` (default `true`).

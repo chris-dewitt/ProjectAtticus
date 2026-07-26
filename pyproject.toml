@@ -41,6 +41,7 @@ desktop = [
   "textual>=0.78.0",
   "pystray==0.19.5",
   "pillow==12.3.0",
+  "pywebview>=5.0",
 ]
 pdf = [
   "pypdf>=4.0",

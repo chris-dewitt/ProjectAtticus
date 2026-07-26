@@ -34,15 +34,22 @@ def _icon_image() -> Any:
     _, image_module, draw_module = _optional_dependencies()
     image = image_module.new("RGBA", (64, 64), (30, 35, 42, 255))
     draw = draw_module.Draw(image)
-    draw.rounded_rectangle((5, 5, 59, 59), radius=12, fill=(47, 111, 167, 255))
-    draw.polygon([(32, 13), (50, 50), (42, 50), (37, 39), (27, 39), (22, 50), (14, 50)], fill="white")
-    draw.rectangle((29, 32, 35, 36), fill=(47, 111, 167, 255))
+    draw.rectangle((8, 8, 56, 56), outline=(184, 149, 108, 255), width=2)
+    draw.text((22, 16), "A", fill=(224, 201, 160, 255))
     return image
 
 
 def _launch_desk() -> None:
     subprocess.Popen(
         [sys.executable, "-m", "atticus.desktop", "desk"],
+        cwd=str(Path.cwd()),
+        close_fds=True,
+    )
+
+
+def _launch_ui() -> None:
+    subprocess.Popen(
+        [sys.executable, "-m", "atticus.desktop", "ui"],
         cwd=str(Path.cwd()),
         close_fds=True,
     )
@@ -68,6 +75,9 @@ def run_tray() -> None:
 
     icon: Any
 
+    def open_ui(_icon: Any, _item: Any) -> None:
+        _launch_ui()
+
     def open_desk(_icon: Any, _item: Any) -> None:
         _launch_desk()
 
@@ -78,7 +88,8 @@ def run_tray() -> None:
         current.stop()
 
     menu = pystray.Menu(
-        pystray.MenuItem("Open Atticus Desk", open_desk, default=True),
+        pystray.MenuItem("Open Atticus Terminal", open_ui, default=True),
+        pystray.MenuItem("Open Status Desk", open_desk),
         pystray.MenuItem("Open Atticus CLI", open_cli),
         pystray.Menu.SEPARATOR,
         pystray.MenuItem("Quit tray", quit_tray),

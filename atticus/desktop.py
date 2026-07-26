@@ -33,6 +33,16 @@ def _run_tray() -> None:
     run_tray()
 
 
+def _run_ui(*, port: int, browser: bool) -> int:
+    from atticus.ui.web_shell import open_terminal_ui
+
+    return open_terminal_ui(
+        port=port,
+        prefer_webview=not browser,
+        start_server=True,
+    )
+
+
 def _autostart(action: str) -> int:
     current = windows_autostart.status()
     if action == "status":
@@ -71,17 +81,30 @@ def _autostart(action: str) -> int:
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="atticus-desktop",
-        description="Atticus desktop, Windows tray, and autostart manager.",
+        description="Atticus desktop UI, tray, and autostart manager.",
     )
     sub = parser.add_subparsers(dest="command")
-    sub.add_parser("desk", help="Open the Textual status desk (default).")
+    sub.add_parser("desk", help="Open the Textual status desk.")
+    ui = sub.add_parser(
+        "ui",
+        help="Open the classical terminal UI (starts local API if needed).",
+    )
+    ui.add_argument("--port", type=int, default=8000, help="API port (default 8000)")
+    ui.add_argument(
+        "--browser",
+        action="store_true",
+        help="Force system browser instead of native window (pywebview).",
+    )
     sub.add_parser("tray", help="Run the Windows system tray.")
     auto = sub.add_parser("autostart", help="Manage the Windows Startup launcher.")
     auto.add_argument("action", choices=("status", "enable", "disable"))
     args = parser.parse_args()
 
     try:
-        if args.command in {None, "desk"}:
+        if args.command in {None, "ui"}:
+            # Default desktop entry opens the classical terminal UI.
+            raise SystemExit(_run_ui(port=getattr(args, "port", 8000), browser=bool(getattr(args, "browser", False))))
+        if args.command == "desk":
             _run_desk()
         elif args.command == "tray":
             _run_tray()

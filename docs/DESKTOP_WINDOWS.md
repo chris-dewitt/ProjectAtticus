@@ -1,91 +1,76 @@
-# Windows Desk, Tray, and Autostart
+# Windows Desk, Tray, Terminal UI, and Autostart
 
-Atticus remains CLI-first. The optional desktop package adds two local
-companions:
+Atticus remains CLI-first. The optional desktop package adds local companions:
 
+- **classical terminal UI** (primary desktop surface — browser or native window);
 - a read-only Textual status desk;
-- a Windows system tray that launches the desk or opens a new Atticus CLI.
+- a Windows system tray that launches the terminal, desk, or CLI.
 
-Neither surface executes tools, arms the microphone, edits config, or bypasses
-the existing CLI approval/audit flow.
+None of these surfaces bypass approvals or silently run tools.
 
 ## Install
 
-From the repository root in an activated virtual environment:
-
 ```powershell
-pip install -e ".[desktop]"
+cd C:\Users\DELL\Documents\GitHub\ProjectAtticus
+pip install -e ".[api,desktop]"
 ```
 
-## Desk
+## Terminal UI (recommended)
 
 ```powershell
-atticus-desktop
-# equivalent:
-atticus-desktop desk
+python -m atticus.desktop ui
+# force browser instead of native window:
+python -m atticus.desktop ui --browser
 ```
 
-The desk displays:
+Also available via the API alone:
 
-- default provider and whether each provider credential is configured (never
-  the credential value);
-- local memory counts and database path;
-- voice configuration;
-- global/per-tool enablement;
-- Windows autostart status.
+```powershell
+python -m atticus.api_server
+# then open http://127.0.0.1:8000/ui/
+```
 
-Press `r` to refresh and `q` to quit. The desk is read-only by design.
+Phone: `python -m atticus.api_server --lan`, then Add to Home Screen / Install app.
+See [`TERMINAL_UI.md`](TERMINAL_UI.md).
+
+## Status desk
+
+```powershell
+python -m atticus.desktop desk
+```
+
+Read-only provider/memory/voice/tool status. Press `r` to refresh, `q` to quit.
 
 ## System tray
 
 ```powershell
-atticus-desktop tray
+python -m atticus.desktop tray
 ```
 
 Tray menu:
 
-- **Open Atticus Desk**
+- **Open Atticus Terminal** (default)
+- **Open Status Desk**
 - **Open Atticus CLI**
 - **Quit tray**
 
-The tray does not run tools or capture audio in the background.
-
 ## Windows autostart
 
-Inspect:
+```powershell
+python -m atticus.desktop autostart status
+python -m atticus.desktop autostart enable
+python -m atticus.desktop autostart disable
+```
+
+Enable/disable require exact confirmation phrases. Autostart launches the tray
+only — it does not auto-run tools or open network listeners by itself.
+
+## Scripts on PATH
+
+If `atticus-desktop` is not recognized after install, either add
+
+`%APPDATA%\Python\Python314\Scripts` to PATH, or keep using:
 
 ```powershell
-atticus-desktop autostart status
+python -m atticus.desktop ui
 ```
-
-Enable:
-
-```powershell
-atticus-desktop autostart enable
-```
-
-Atticus shows the exact Startup file and command, then requires typing
-`ENABLE`. It creates only:
-
-```text
-%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\ProjectAtticus-Tray.cmd
-```
-
-Disable:
-
-```powershell
-atticus-desktop autostart disable
-```
-
-Atticus requires typing `DISABLE`, then removes only its own launcher.
-
-Autostart uses the Python environment active when it is enabled. If the repo or
-virtual environment moves, disable and enable autostart again.
-
-## Limitations
-
-- Tray/autostart are Windows-only.
-- There is no full graphical chat yet; the tray opens the CLI.
-- Runtime mute/mic state belongs to each CLI process and is not controlled by
-  the tray.
-- OAuth and tool approvals remain terminal flows.
