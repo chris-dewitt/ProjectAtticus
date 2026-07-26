@@ -20,6 +20,8 @@ def test_load_app_config_from_example(repo_root: Path, monkeypatch: pytest.Monke
     assert cfg.api.ui_enabled is True
     assert cfg.api.runs_sqlite_path.endswith("atticus_runs.sqlite3")
     assert cfg.api.max_messages_per_run == 32
+    assert cfg.policy.approvals_sqlite_path.endswith("atticus_approvals.sqlite3")
+    assert cfg.policy.approval_token_env == "ATTICUS_APPROVAL_TOKEN"
     assert cfg.telemetry.service_name == "project-atticus"
     assert cfg.telemetry.enabled is True
 

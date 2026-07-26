@@ -32,6 +32,13 @@ Track A packaging milestone (personal assistant), not Track B M0–M5 completion
 
 ## Unreleased
 
+### Track B M3 policy / approvals
+
+- Deterministic `atticus/policy/` engine (allow/deny/require approval)
+- Stable action digests, expiring durable approval requests, execution results
+- Token + exact-phrase gated `/v1/approvals` decisions and policy audit
+- Pending approval queue in the retro terminal UI; ADR-013
+
 ### Retro terminal UI + Track B M2 citations
 
 - Local CRT/phosphor web terminal at `/ui/` (phone via `atticus-api --lan`)

@@ -2,15 +2,18 @@
   const logEl = document.getElementById("log");
   const sysEl = document.getElementById("sys");
   const citesEl = document.getElementById("cites");
+  const approvalsEl = document.getElementById("approvals");
   const promptEl = document.getElementById("prompt");
   const sendBtn = document.getElementById("send-btn");
   const newBtn = document.getElementById("new-btn");
   const citeBtn = document.getElementById("cite-btn");
+  const approvalAuthBtn = document.getElementById("approval-auth-btn");
   const linkEl = document.getElementById("link-status");
   const sessionEl = document.getElementById("session");
 
   const state = {
     conversationId: localStorage.getItem("atticus.conversationId") || null,
+    approvalToken: null,
     busy: false,
   };
 
@@ -31,13 +34,14 @@
   }
 
   async function api(path, options = {}) {
+    const { headers = {}, ...rest } = options;
     const response = await fetch(path, {
+      ...rest,
       headers: {
         "Content-Type": "application/json",
         "X-Correlation-ID": crypto.randomUUID(),
-        ...(options.headers || {}),
+        ...headers,
       },
-      ...options,
     });
     const text = await response.text();
     let body = null;
@@ -91,6 +95,99 @@
     } catch (err) {
       citesEl.textContent = `// citations unavailable\n${err.message || err}`;
     }
+  }
+
+  async function refreshApprovals() {
+    if (!state.approvalToken) {
+      approvalsEl.textContent = "// queue locked\n// select AUTH APPROVALS";
+      return;
+    }
+    try {
+      const data = await api("/v1/approvals?status=pending&limit=12", {
+        headers: { "X-Atticus-Approval-Token": state.approvalToken },
+      });
+      const items = data.items || [];
+      approvalsEl.replaceChildren();
+      if (!items.length) {
+        approvalsEl.textContent = "// no pending requests";
+        return;
+      }
+      for (const approval of items) {
+        const card = document.createElement("div");
+        card.className = "approval-card";
+
+        const summary = document.createElement("p");
+        summary.textContent =
+          `[${approval.risk}] ${approval.tool_name}\n${approval.action_summary}`;
+        card.appendChild(summary);
+
+        const digest = document.createElement("p");
+        digest.className = "digest";
+        digest.textContent = `digest: ${approval.action_digest.slice(0, 16)}…`;
+        card.appendChild(digest);
+
+        const approve = document.createElement("button");
+        approve.type = "button";
+        approve.textContent = "APPROVE";
+        approve.addEventListener("click", () => decideApproval(approval, true));
+        card.appendChild(approve);
+
+        const deny = document.createElement("button");
+        deny.type = "button";
+        deny.className = "deny";
+        deny.textContent = "DENY";
+        deny.addEventListener("click", () => decideApproval(approval, false));
+        card.appendChild(deny);
+        approvalsEl.appendChild(card);
+      }
+    } catch (err) {
+      approvalsEl.textContent = `// approvals unavailable\n${err.message || err}`;
+    }
+  }
+
+  async function decideApproval(approval, approve) {
+    const verb = approve ? "APPROVE" : "DENY";
+    const required = `${verb} ${approval.confirmation_hint}`;
+    const confirmation = window.prompt(
+      `Exact action digest confirmation required:\n${required}`,
+      ""
+    );
+    if (confirmation !== required) {
+      line("system", "approval cancelled: confirmation mismatch", "error");
+      return;
+    }
+    const token = state.approvalToken;
+    if (!token) {
+      line("system", "approval cancelled: token missing", "error");
+      return;
+    }
+    try {
+      const decided = await api(`/v1/approvals/${approval.id}/decision`, {
+        method: "POST",
+        headers: { "X-Atticus-Approval-Token": token },
+        body: JSON.stringify({
+          decision: approve ? "approve" : "deny",
+          actor: "boss",
+          action_digest: approval.action_digest,
+          confirmation,
+          rationale: "Decision from retro terminal UI.",
+        }),
+      });
+      line("system", `approval ${decided.id} :: ${decided.status}`, "system");
+      refreshApprovals();
+    } catch (err) {
+      line("system", String(err.message || err), "error");
+    }
+  }
+
+  function authenticateApprovals() {
+    const token = window.prompt(
+      "Enter ATTICUS_APPROVAL_TOKEN (kept in page memory only):",
+      ""
+    );
+    if (!token) return;
+    state.approvalToken = token;
+    refreshApprovals();
   }
 
   async function ensureConversation() {
@@ -159,6 +256,7 @@
   sendBtn.addEventListener("click", sendMessage);
   newBtn.addEventListener("click", newSession);
   citeBtn.addEventListener("click", refreshCitations);
+  approvalAuthBtn.addEventListener("click", authenticateApprovals);
   promptEl.addEventListener("keydown", (event) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
@@ -174,5 +272,7 @@
   }
   refreshSystem();
   refreshCitations();
+  refreshApprovals();
   setInterval(refreshSystem, 15000);
+  setInterval(refreshApprovals, 15000);
 })();

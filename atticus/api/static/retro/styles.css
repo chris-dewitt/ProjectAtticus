@@ -171,6 +171,37 @@ body {
   color: var(--phosphor);
 }
 
+.approval-card {
+  border: 1px solid rgba(255, 176, 0, 0.45);
+  padding: 0.55rem;
+  margin: 0 0 0.65rem;
+  color: var(--phosphor);
+  background: rgba(255, 176, 0, 0.04);
+}
+
+.approval-card p {
+  margin: 0 0 0.35rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.approval-card .digest {
+  color: var(--amber);
+}
+
+.approval-card button {
+  font-size: 0.68rem;
+  padding: 0.35rem 0.5rem;
+  margin-right: 0.35rem;
+}
+
+.approval-card button.deny {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: transparent;
+  box-shadow: none;
+}
+
 .line {
   margin: 0 0 0.75rem;
   white-space: pre-wrap;

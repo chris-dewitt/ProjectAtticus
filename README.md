@@ -19,12 +19,17 @@ Package version `1.0.0` labels this Track A milestone. A full GUI chat remains u
 
 **Track B — portfolio agent platform (in progress / planned):**
 
-- **M0–M2 slices started:** local FastAPI health + bounded runs + structured citations + retro terminal UI (`pip install -e ".[api]"`, `atticus-api`, open `/ui/`) — see ADR-010–012, [`docs/API.md`](docs/API.md), [`docs/TERMINAL_UI.md`](docs/TERMINAL_UI.md)
-- Policy engine, approvals API, traces/evals, Postgres still planned per [`SPEC.md`](SPEC.md)
+- **M0–M3 slices started:** local FastAPI health + bounded runs + citations +
+  retro UI + deterministic policy/token-gated approvals (`pip install -e
+  ".[api]"`, `atticus-api`, open `/ui/`) — see ADR-010–013,
+  [`docs/API.md`](docs/API.md), [`docs/TERMINAL_UI.md`](docs/TERMINAL_UI.md)
+- Approved tool dispatch, traces/evals, Postgres still planned per [`SPEC.md`](SPEC.md)
 - Engineering bar in [`docs/SHARED_ENGINEERING_STANDARD.md`](docs/SHARED_ENGINEERING_STANDARD.md)
 - Honest capability map in [`docs/PORTFOLIO_ALIGNMENT.md`](docs/PORTFOLIO_ALIGNMENT.md)
 
-Do not present Postgres, Next.js, sandboxes, OTel exporters, approvals APIs, or M3–M5 as already complete. M0–M2 are vertical slices, not the full shared-standard bar.
+Do not present Postgres, Next.js, sandboxes, OTel exporters, tool dispatch,
+or M4–M5 as already complete. M0–M3 are vertical slices, not the full
+shared-standard bar.
 
 ## North star
 
@@ -166,6 +171,7 @@ atticus-api
 # GET  http://127.0.0.1:8000/health/live
 # POST http://127.0.0.1:8000/v1/conversations/{id}/messages
 # GET  http://127.0.0.1:8000/v1/citations
+# GET  http://127.0.0.1:8000/v1/approvals?status=pending
 # Phone/LAN (trusted network only):
 atticus-api --lan
 ```
@@ -186,6 +192,8 @@ CRT/phosphor terminal UI details: [`docs/TERMINAL_UI.md`](docs/TERMINAL_UI.md). 
 10. **Done (M0 slice):** local health/readiness API + structured errors + telemetry hooks (`.[api]`, `atticus-api`).
 11. **Done (M1 slice):** `/v1/conversations` + `/v1/runs` with checkpoints, cancel, and idempotency (`atticus/runs/`).
 12. **Done (M2 slice + retro UI):** `atticus.citation.v1` provenance, `/v1/citations`, phosphor terminal at `/ui/`.
-13. **Next good step:** Track B **M3** — first-class policy/approval API objects (or run↔citation linkage).
+13. **Done (M3 slice):** deterministic policy decisions, exact action digests,
+    token-gated approval decisions, expiry, execution result records, audit.
+14. **Next good step:** M3 idempotent approved tool dispatch, then M4 trace/replay.
 
 Do not add real keys to `.env.example`. Keep `.env` and `config/atticus.yaml` out of git if they contain secrets or machine-specific paths.

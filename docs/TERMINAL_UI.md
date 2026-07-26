@@ -38,5 +38,9 @@ Warnings:
 - Sends messages through bounded runs
 - Shows health/ready status
 - Lists structured citations from `/v1/citations`
+- **AUTH APPROVALS** prompts for `ATTICUS_APPROVAL_TOKEN`, kept only in page
+  memory, then shows pending requests
+- Approve/deny prompts for an exact digest phrase; the token is never written
+  to local storage
 
 Config flag: `api.ui_enabled` (default `true`). Set `false` to serve API-only.

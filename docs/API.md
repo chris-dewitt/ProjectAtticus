@@ -1,6 +1,6 @@
 # Track B local API
 
-Status: M0 health + M1 bounded runs + M2 citations + retro `/ui` (ADR-010–012)
+Status: M0 health + M1 bounded runs + M2 citations + M3 policy/approvals + retro `/ui` (ADR-010–013)
 
 ## Install and run
 
@@ -21,6 +21,7 @@ Defaults (from `config/atticus.example.yaml`):
 - OpenAPI docs: off (`api.docs_enabled: false`)
 - runs DB: `data/atticus_runs.sqlite3`
 - citations dir: `tools.browser.citation_dir` (`data/citations`)
+- policy/audit DB: `data/atticus_approvals.sqlite3`
 
 See also [`docs/TERMINAL_UI.md`](TERMINAL_UI.md).
 
@@ -110,9 +111,41 @@ Send `Idempotency-Key` on `POST /v1/conversations/{id}/messages` or `POST /v1/ru
 
 Schema version: `atticus.citation.v1` (stable id, kind, source URI, sha256, evidence spans, tool name, trust flags). Produced by CLI `/browse`, `/file read`, `/code-search`. Legacy browse JSON is normalized on read.
 
+## Policy and approvals (M3)
+
+| Method | Path | Meaning |
+|--------|------|---------|
+| POST | `/v1/policy/evaluate` | Persist deterministic allow/deny/require-approval decision |
+| POST | `/v1/approvals` | Evaluate intent and create approval when required |
+| GET | `/v1/approvals` | List requests; filter `?status=pending` |
+| GET | `/v1/approvals/{id}` | Inspect exact action digest and lifecycle |
+| POST | `/v1/approvals/{id}/decision` | Approve/deny (token + exact phrase required) |
+| POST | `/v1/approvals/{id}/execution` | Record approved action result |
+| GET | `/v1/audit/policy` | Read policy audit (token required) |
+
+Before decisions work, create a long random local secret:
+
+```powershell
+$env:ATTICUS_APPROVAL_TOKEN = "replace-with-a-long-random-value"
+atticus-api
+```
+
+All policy/approval/audit endpoints require `X-Atticus-Approval-Token`.
+Decision calls additionally require:
+
+- Header `X-Atticus-Approval-Token`
+- The full returned `action_digest`
+- Exact `confirmation`: `APPROVE <confirmation_hint>` or
+  `DENY <confirmation_hint>`
+
+The terminal UI's **AUTH APPROVALS** control holds the token only in page memory,
+then displays pending requests and asks for the exact phrase when deciding. It
+never writes the token to local storage. Policy input values are included in
+the action digest but are not copied into policy/audit rows.
+
 ## Out of scope (later milestones)
 
-- Approvals API and policy engine objects (M3)
+- Idempotent automatic tool dispatch after approval (M3 remainder)
 - Trace viewer / replay UI (M4)
 - EvalForge suites (M5)
 - Postgres / Redis / Docker Compose
