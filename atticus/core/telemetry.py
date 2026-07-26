@@ -1,7 +1,7 @@
-"""Lightweight telemetry hooks for Track B M0 (no OTel exporter yet).
+"""Telemetry hooks with optional OTLP-shaped JSON file / stderr exporter.
 
 Emits structured, privacy-preserving events to an in-process sink and optional
-stderr JSON lines. Secrets and common credential field names are redacted.
+exporters. Secrets and common credential field names are redacted.
 """
 
 from __future__ import annotations
@@ -15,6 +15,7 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Iterator, Mapping
 
 _correlation_id: ContextVar[str | None] = ContextVar("atticus_correlation_id", default=None)
@@ -51,7 +52,7 @@ class TelemetryEvent:
 
 
 class Telemetry:
-    """In-process telemetry recorder with optional stderr JSON emission."""
+    """In-process telemetry recorder with optional stderr/file JSON emission."""
 
     def __init__(
         self,
@@ -60,6 +61,8 @@ class Telemetry:
         service_name: str = "project-atticus",
         environment: str = "local",
         emit_stderr: bool = False,
+        otel_exporter: str = "none",
+        otel_file_path: str | Path | None = None,
         redact_keys: frozenset[str] | set[str] | None = None,
         max_events: int = 500,
     ) -> None:
@@ -67,6 +70,8 @@ class Telemetry:
         self.service_name = service_name
         self.environment = environment
         self.emit_stderr = emit_stderr
+        self.otel_exporter = (otel_exporter or "none").lower()
+        self.otel_file_path = Path(otel_file_path) if otel_file_path else Path("data/telemetry/otel.jsonl")
         self.redact_keys = frozenset(k.lower() for k in (redact_keys or DEFAULT_REDACT_KEYS))
         self.max_events = max_events
         self._events: list[TelemetryEvent] = []
@@ -92,9 +97,32 @@ class Telemetry:
         self._events.append(event)
         if len(self._events) > self.max_events:
             self._events = self._events[-self.max_events :]
-        if self.emit_stderr:
-            sys.stderr.write(json.dumps(event_to_dict(event), default=str) + "\n")
+        payload = event_to_dict(event)
+        if self.emit_stderr or self.otel_exporter == "stderr":
+            sys.stderr.write(json.dumps(payload, default=str) + "\n")
+        if self.otel_exporter == "file":
+            self._export_file(payload)
         return event
+
+    def _export_file(self, payload: dict[str, Any]) -> None:
+        """Write an OTel-inspired JSON log record (no secrets)."""
+        try:
+            self.otel_file_path.parent.mkdir(parents=True, exist_ok=True)
+            otel_record = {
+                "resource": {
+                    "service.name": self.service_name,
+                    "deployment.environment": self.environment,
+                },
+                "body": payload.get("name"),
+                "timestamp": payload.get("timestamp"),
+                "trace_id": payload.get("correlation_id"),
+                "attributes": payload.get("attributes") or {},
+            }
+            with self.otel_file_path.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps(otel_record, default=str) + "\n")
+        except OSError:
+            # Telemetry must never break request paths.
+            return
 
     def redact(self, value: Any) -> Any:
         if isinstance(value, Mapping):

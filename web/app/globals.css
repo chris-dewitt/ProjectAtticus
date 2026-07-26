@@ -1,0 +1,81 @@
+:root {
+  --ink: #0e1a14;
+  --panel: #15261c;
+  --phosphor: #7dffb3;
+  --dim: #3f6b52;
+  --warn: #f0c674;
+  --font-display: "IBM Plex Mono", "Courier New", monospace;
+  --font-body: "Source Serif 4", "Palatino Linotype", serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background:
+    radial-gradient(circle at 20% 0%, #1d3a29 0%, transparent 45%),
+    linear-gradient(160deg, #07110c 0%, #122018 55%, #0a1410 100%);
+  color: var(--phosphor);
+  font-family: var(--font-body);
+}
+
+.shell {
+  min-height: 100vh;
+  padding: 2.5rem clamp(1rem, 4vw, 3rem);
+}
+
+.brand {
+  font-family: var(--font-display);
+  font-size: clamp(2.8rem, 8vw, 5rem);
+  letter-spacing: 0.08em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.lede {
+  max-width: 36rem;
+  font-size: 1.15rem;
+  color: #b7e7c9;
+  line-height: 1.5;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+a.button,
+button {
+  font-family: var(--font-display);
+  border: 1px solid var(--phosphor);
+  background: transparent;
+  color: var(--phosphor);
+  padding: 0.7rem 1.1rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+a.button:hover,
+button:hover {
+  background: rgba(125, 255, 179, 0.12);
+}
+
+.panel {
+  margin-top: 2rem;
+  border-top: 1px solid var(--dim);
+  padding-top: 1rem;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+  color: #9fd9b4;
+}
+
+.muted {
+  color: var(--dim);
+}

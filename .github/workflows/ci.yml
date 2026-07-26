@@ -15,5 +15,18 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install package and dev deps
         run: pip install -e ".[dev,api]"
-      - name: Run tests
+      - name: Unit and integration tests
         run: pytest -q
+      - name: Evaluation smoke suite
+        run: python scripts/run_evals.py --suite platform
+      - name: Signature demo smoke
+        run: python scripts/run_signature_demo.py --artifacts data/artifacts/ci_signature_demo
+
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build API image
+        run: docker build -t projectatticus-api:ci .
+      - name: Build web image
+        run: docker build -t projectatticus-web:ci ./web

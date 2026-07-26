@@ -1,6 +1,6 @@
 # Track B local API
 
-Status: M0 health + M1 bounded runs + M2 citations + M3 policy/approvals + retro `/ui` (ADR-010–013)
+Status: M0–M5 local platform API + retro `/ui` + optional Next.js `web/` (ADR-010–018)
 
 ## Install and run
 
@@ -94,7 +94,8 @@ Send `Idempotency-Key` on `POST /v1/conversations/{id}/messages` or `POST /v1/ru
 
 ## Telemetry
 
-`atticus.core.telemetry` records redacted in-process events (`api.request`, `run.succeeded`, `run.failed`, `run.cancelled`). No OpenTelemetry exporter yet.
+`atticus.core.telemetry` records redacted in-process events and can export
+OTel-shaped JSON lines (`telemetry.otel_exporter: stderr|file`).
 
 ## Privacy notes
 
@@ -145,10 +146,40 @@ prompts for an `Idempotency-Key`. The token is never written to local storage.
 
 Dispatchable tools in this slice: `local_echo`, `file_write` (approved paths).
 
-## Out of scope (later milestones)
+## Traces and replay (M4)
 
-- Broader gateway handlers (gmail/calendar/git/patch)
-- Trace viewer / replay UI (M4)
-- EvalForge suites (M5)
-- Postgres / Redis / Docker Compose
-- Authenticated LAN pairing token for phone access
+| Method | Path | Meaning |
+|--------|------|---------|
+| GET | `/v1/traces/{run_id}` | List persisted spans for a run |
+| GET | `/v1/runs/{run_id}/replay` | Reconstruct checkpoints/spans/artifacts |
+
+## Sandbox (M4)
+
+| Method | Path | Meaning |
+|--------|------|---------|
+| POST | `/v1/sandbox/execute` | Run bounded Python (shell opt-in) |
+
+## Memory and settings
+
+| Method | Path | Meaning |
+|--------|------|---------|
+| GET/POST | `/v1/memory/*` | list/search/remember/forget |
+| GET/PATCH | `/v1/settings` | Non-secret operator toggles |
+
+## Evals and signature demo (M5)
+
+| Method | Path | Meaning |
+|--------|------|---------|
+| POST | `/v1/evals/run?suite=platform` | Run versioned eval suite |
+| POST | `/v1/demo/signature` | Synthetic signature demo; stops for approval |
+
+## Auth and rate limits
+
+- When `ATTICUS_API_TOKEN` is set, `/v1/*` requires `X-Atticus-Api-Token`.
+- `api.rate_limit_per_minute` applies a fixed-window limiter (0 disables).
+
+## Still incremental
+
+- Broader gateway handlers (gmail/calendar/git publish)
+- Authenticated LAN pairing for phone access
+- Postgres as default store (Compose service available; SQLite default)

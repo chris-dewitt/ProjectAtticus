@@ -34,10 +34,13 @@ Warnings:
 
 ## What it does
 
-- Creates/resumes a `/v1` conversation session
+- Creates/resumes a `/v1` conversation session (GUI chat)
 - Sends messages through bounded runs
-- Shows health/ready status
+- Shows health/ready status and editable settings
 - Lists structured citations from `/v1/citations`
+- Approval queue with AUTH / APPROVE / DENY / EXECUTE
+- TRACE / REPLAY panel for the last run
+- SIG DEMO button for the synthetic signature workflow
 - **AUTH APPROVALS** prompts for `ATTICUS_APPROVAL_TOKEN`, kept only in page
   memory, then shows pending requests
 - Approve/deny prompts for an exact digest phrase; the token is never written

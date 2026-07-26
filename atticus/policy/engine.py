@@ -86,6 +86,9 @@ def _tool_enabled(cfg: AppConfig, tool_name: str) -> bool:
         return cfg.tools.enabled
     if key.startswith(("file_", "code_search", "summarize_file")):
         return cfg.tools.files.enabled
+    # github* before git* — "github".startswith("git") is True.
+    if key.startswith("github"):
+        return cfg.tools.github.enabled
     if key.startswith(("git", "patch", "test", "shell")):
         return cfg.tools.shell.enabled
     if key.startswith(("browse", "open_url")):
@@ -94,6 +97,4 @@ def _tool_enabled(cfg: AppConfig, tool_name: str) -> bool:
         return cfg.tools.email.enabled
     if key.startswith("calendar"):
         return cfg.tools.calendar.enabled
-    if key.startswith("github"):
-        return cfg.tools.github.enabled
     return False

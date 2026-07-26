@@ -13,6 +13,8 @@ providers:
     automatic: true
     default_provider: openai
     allow_manual_override: true
+    fallback_order: ["openai", "anthropic", "gemini"]
+    record_routing_decisions: true
   openai:
     enabled: true
     model: "gpt-4o-mini"
@@ -53,8 +55,12 @@ api:
   # Retro terminal UI at /ui (phone: atticus-api --host 0.0.0.0 on trusted LAN only)
   ui_enabled: true
   runs_sqlite_path: "data/atticus_runs.sqlite3"
+  traces_sqlite_path: "data/atticus_traces.sqlite3"
   max_messages_per_run: 32
   include_system_prompt: true
+  # When ATTICUS_API_TOKEN is set, /v1 requires X-Atticus-Api-Token
+  api_token_env: ATTICUS_API_TOKEN
+  rate_limit_per_minute: 180
 
 # Track B M3 — durable policy decisions and token-gated approval decisions.
 policy:
@@ -62,13 +68,23 @@ policy:
   approval_ttl_seconds: 900
   approval_token_env: ATTICUS_APPROVAL_TOKEN
 
-# Lightweight telemetry hooks (no OpenTelemetry exporter in M0)
+# Track B M4 — sandboxed local execution
+sandbox:
+  enabled: true
+  timeout_seconds: 5.0
+  max_output_bytes: 32000
+  allow_shell: false
+  work_dir: "data/sandbox"
+
+# Telemetry hooks + optional OTel-shaped JSON file exporter
 telemetry:
   enabled: true
   service_name: "project-atticus"
   environment: local
   log_level: INFO
   emit_stderr: false
+  otel_exporter: none  # none | stderr | file
+  otel_file_path: "data/telemetry/otel.jsonl"
 
 voice:
   spoken_responses: false

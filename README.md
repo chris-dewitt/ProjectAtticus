@@ -15,20 +15,21 @@ Atticus is intentionally built as a serious personal software project: privacy-c
 - Optional TTS, local PTT/wake (Vosk), opt-in file/git/GitHub/Gmail/Calendar/browse tools
 - Read-only Textual status desk, Windows tray, and confirmation-gated autostart
 
-Package version `1.0.0` labels this Track A milestone. A full GUI chat remains unfinished.
+Package version `1.0.0` labels the Track A personal-assistant packaging milestone.
+The local retro `/ui` now covers GUI chat, approvals, settings, traces, and the
+signature demo; a fuller native desktop chat shell remains optional polish.
 
-**Track B — portfolio agent platform (in progress / planned):**
+**Track B — portfolio agent platform (M0–M5 vertical slices shipped locally):**
 
-- **M0–M3 slices started:** local FastAPI health + bounded runs + citations +
-  retro UI + policy/approvals + idempotent approved-tool dispatch
-  (`pip install -e ".[api]"`, `atticus-api`, open `/ui/`) — see ADR-010–014,
-  [`docs/API.md`](docs/API.md), [`docs/TERMINAL_UI.md`](docs/TERMINAL_UI.md)
-- Traces/evals, Postgres, broader gateway handlers still planned per [`SPEC.md`](SPEC.md)
-- Engineering bar in [`docs/SHARED_ENGINEERING_STANDARD.md`](docs/SHARED_ENGINEERING_STANDARD.md)
-- Honest capability map in [`docs/PORTFOLIO_ALIGNMENT.md`](docs/PORTFOLIO_ALIGNMENT.md)
+- Health, bounded runs, citations, policy/approvals, idempotent dispatch
+- Traces/replay, sandbox, memory controls, evals, routing fallback, signature demo
+- Docker Compose + Next.js `web/` + OTel-shaped exporter + Azure Terraform sketches
+- See ADR-010–018, [`docs/API.md`](docs/API.md), [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md),
+  [`docs/PORTFOLIO_ALIGNMENT.md`](docs/PORTFOLIO_ALIGNMENT.md)
 
-Do not present Postgres, Next.js, sandboxes, OTel exporters, or M4–M5 as
-already complete. M0–M3 are vertical slices, not the full shared-standard bar.
+Honest limits: SQLite remains the default store (Postgres/Redis optional in
+Compose); OTel exporter is file/stderr JSON (not a full collector pipeline);
+Azure Terraform is a sketch, not a live shared environment.
 
 ## North star
 

@@ -1,0 +1,62 @@
+# Local platform dependencies per SHARED_ENGINEERING_STANDARD.
+# Default Atticus API still uses SQLite inside the api container (ADR-015).
+# Postgres/Redis are optional platform services for portfolio parity and future stores.
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      ATTICUS_CONFIG_PATH: /app/config/atticus.example.yaml
+      ATTICUS_TELEMETRY: "1"
+      ATTICUS_TELEMETRY_STDERR: "0"
+      # Optional: set in a local .env (never commit secrets)
+      # ATTICUS_API_TOKEN: replace-me
+      # ATTICUS_APPROVAL_TOKEN: replace-me
+    volumes:
+      - atticus-data:/app/data
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: atticus
+      POSTGRES_PASSWORD: atticus_dev_only
+      POSTGRES_DB: atticus
+    ports:
+      - "5432:5432"
+    volumes:
+      - atticus-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U atticus -d atticus"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  web:
+    build:
+      context: ./web
+    ports:
+      - "3000:3000"
+    environment:
+      ATTICUS_API_BASE: http://api:8000
+      NEXT_PUBLIC_ATTICUS_API_BASE: http://localhost:8000
+    depends_on:
+      - api
+
+volumes:
+  atticus-data:
+  atticus-pg:
