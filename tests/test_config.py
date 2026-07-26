@@ -17,6 +17,8 @@ def test_load_app_config_from_example(repo_root: Path, monkeypatch: pytest.Monke
     assert cfg.api.host == "127.0.0.1"
     assert cfg.api.port == 8000
     assert cfg.api.enabled is False
+    assert cfg.api.runs_sqlite_path.endswith("atticus_runs.sqlite3")
+    assert cfg.api.max_messages_per_run == 32
     assert cfg.telemetry.service_name == "project-atticus"
     assert cfg.telemetry.enabled is True
 

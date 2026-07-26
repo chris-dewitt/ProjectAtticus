@@ -1,6 +1,6 @@
-# Track B local API (M0)
+# Track B local API
 
-Status: M0 health/readiness slice only (ADR-010)
+Status: M0 health + M1 bounded runs (ADR-010, ADR-011)
 
 ## Install and run
 
@@ -15,16 +15,55 @@ Defaults (from `config/atticus.example.yaml`):
 - host: `127.0.0.1`
 - port: `8000`
 - OpenAPI docs: off (`api.docs_enabled: false`)
+- runs DB: `data/atticus_runs.sqlite3`
 
-## Endpoints
+## Health
 
 | Method | Path | Meaning |
 |--------|------|---------|
-| GET | `/health/live` | Process is up; returns service name, version, correlation id |
-| GET | `/health/ready` | Config loadable + memory parent path writable |
+| GET | `/health/live` | Process is up |
+| GET | `/health/ready` | Config + memory path + runs path usable |
 | GET | `/ready` | Alias of `/health/ready` |
 
-Not ready returns HTTP 503 with a structured `checks` list. Missing/invalid config does not fall back to the example file for readiness when an explicit path was configured on the app.
+## Conversations and bounded runs (M1)
+
+| Method | Path | Meaning |
+|--------|------|---------|
+| POST | `/v1/conversations` | Create conversation (`{"title"?}`) |
+| GET | `/v1/conversations/{id}` | Fetch conversation |
+| GET | `/v1/conversations/{id}/messages` | List messages |
+| POST | `/v1/conversations/{id}/messages` | Append user message; optionally execute a run |
+| POST | `/v1/runs` | Create a run (optionally creates a conversation) |
+| GET | `/v1/runs/{id}` | Fetch run + checkpoints |
+| POST | `/v1/runs/{id}/cancel` | Cancel queued/running run |
+
+### Example
+
+```powershell
+# Create conversation
+Invoke-RestMethod -Method POST http://127.0.0.1:8000/v1/conversations -ContentType 'application/json' -Body '{"title":"demo"}'
+
+# Send message + execute bounded run (uses configured provider; tests use mock)
+Invoke-RestMethod -Method POST http://127.0.0.1:8000/v1/conversations/<id>/messages `
+  -ContentType 'application/json' `
+  -Headers @{ 'Idempotency-Key' = 'demo-1' } `
+  -Body '{"content":"Status report?","execute":true,"provider":"mock"}'
+```
+
+Run statuses: `queued` → `running` → `succeeded` | `failed` | `cancelled`.
+
+Checkpoints recorded on the run include `queued`, `validate_request`, `assemble_context`, `execute_provider`, and `finalize` (or `cancelled` / `failed`).
+
+### Idempotency
+
+Send `Idempotency-Key` on `POST /v1/conversations/{id}/messages` or `POST /v1/runs`. Replay returns the original run without creating a duplicate.
+
+### Providers
+
+- Default provider comes from config (`providers.routing.default_provider`, usually `openai`).
+- Request body may set `"provider": "openai" | "anthropic" | "gemini" | "mock"`.
+- `mock` is for tests/fixtures only (no network).
+- Live providers still require env credentials; automated tests never call paid APIs.
 
 ## Correlation IDs
 
@@ -34,25 +73,30 @@ Not ready returns HTTP 503 with a structured `checks` list. Missing/invalid conf
 
 ## Structured errors
 
-Unhandled failures and `AtticusError` subclasses return:
-
 ```json
 {
   "error": {
-    "code": "internal_error",
-    "message": "An unexpected error occurred.",
+    "code": "run_not_found",
+    "message": "Run not found: ...",
     "correlation_id": "...",
-    "details": {}
+    "details": {"run_id": "..."}
   }
 }
 ```
 
 ## Telemetry
 
-`atticus.core.telemetry` records redacted in-process events (`api.request`, `api.readiness`, `api.error`). No OpenTelemetry exporter is installed in M0.
+`atticus.core.telemetry` records redacted in-process events (`api.request`, `run.succeeded`, `run.failed`, `run.cancelled`). No OpenTelemetry exporter yet.
+
+## Privacy notes
+
+- Run transcripts live in the local runs SQLite DB (`api.runs_sqlite_path`), separate from Track A memory notes/summaries.
+- Raw Track A chat transcripts are still not stored by default.
+- Do not point the API at cloud hosts without an explicit later ADR.
 
 ## Out of scope (later milestones)
 
-- Conversations / chat completions
-- Persisted bounded runs (M1)
-- Approvals, traces, evals, Postgres
+- Approvals API and policy engine objects (M3)
+- Trace viewer / replay UI (M4)
+- EvalForge suites (M5)
+- Postgres / Redis / Docker Compose

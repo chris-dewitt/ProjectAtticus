@@ -56,6 +56,27 @@ def evaluate_readiness(
             )
         )
 
+    runs_path = Path(cfg.api.runs_sqlite_path).expanduser()
+    runs_parent = runs_path.parent if runs_path.parent != Path("") else Path(".")
+    try:
+        runs_parent.mkdir(parents=True, exist_ok=True)
+        runs_ok = runs_parent.is_dir() and os_access_write(runs_parent)
+        checks.append(
+            ReadyCheck(
+                name="runs_path",
+                ok=runs_ok,
+                detail=str(runs_path),
+            )
+        )
+    except OSError as exc:
+        checks.append(
+            ReadyCheck(
+                name="runs_path",
+                ok=False,
+                detail=f"unavailable: {exc.__class__.__name__}",
+            )
+        )
+
     ready = all(check.ok for check in checks)
     status = "ready" if ready else "not_ready"
     get_telemetry().emit(

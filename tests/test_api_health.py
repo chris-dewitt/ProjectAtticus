@@ -18,6 +18,7 @@ def api_client(repo_root: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
     monkeypatch.chdir(tmp_path)
     cfg, path = load_app_config(config_path=repo_root / "config" / "atticus.example.yaml")
     cfg.memory.sqlite_path = str(tmp_path / "data" / "memory.sqlite3")
+    cfg.api.runs_sqlite_path = str(tmp_path / "data" / "runs.sqlite3")
     cfg.api.docs_enabled = False
     tel = Telemetry(enabled=True, emit_stderr=False, service_name="project-atticus-test")
     app = create_app(config=cfg, config_path=path, telemetry=tel)
@@ -43,6 +44,7 @@ def test_health_ready_ok(api_client: TestClient) -> None:
     names = {check["name"] for check in body["checks"]}
     assert "config" in names
     assert "memory_path" in names
+    assert "runs_path" in names
     assert all(check["ok"] for check in body["checks"])
 
 

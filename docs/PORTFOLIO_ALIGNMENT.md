@@ -63,7 +63,7 @@ Track B is **not started as a platform rewrite**. Do not present FastAPI, Postgr
 | Milestone | Exit criteria (SPEC) | Already covered by Track A? | Still needed |
 |-----------|----------------------|-----------------------------|--------------|
 | M0 | Skeleton, typed config, API health, CI, telemetry | Partial + M0 health slice (`atticus-api`, structured errors, telemetry hooks) | Broader CI (lint/type/security), OTel exporter |
-| M1 | Conversation, provider, persisted bounded run | Partial (CLI chat + OpenAI) | Run persistence, cancel, provider capability metadata |
+| M1 | Conversation, provider, persisted bounded run | Partial + `/v1` conversations/runs (SQLite, checkpoints, cancel, idempotency) | Async workers, richer provider capability metadata |
 | M2 | Read-only file/search + citations | Partial (`/file`, `/code-search`) | Citation/provenance schema, structured artifacts |
 | M3 | Policy engine, write tool, approvals, audit | Partial (permission classes, y/N, audit table, file write) | First-class policy decisions, approval API, idempotency |
 | M4 | Memory controls, sandbox, replay, trace viewer | Partial (memory forget/prefs) | Sandbox, replay, trace viewer |
@@ -86,7 +86,7 @@ Track A today can support pieces (`/file`, memory notes, `/gh` read APIs, approv
 
 Portfolio reviewers and agents must **not** claim these as done:
 
-- Typed HTTP API for conversations/runs/approvals/traces (health/ready only in M0)
+- Typed HTTP API for approvals/traces (health + conversations/runs exist in M0/M1; approvals/traces still open)
 - Next.js (or other) production web UI
 - PostgreSQL / Redis / object storage / Docker Compose local stack
 - Bounded orchestrator with persisted checkpoints and cancel
@@ -103,7 +103,8 @@ Portfolio reviewers and agents must **not** claim these as done:
 
 When extending the repo toward Track B, prefer evolving these existing seams:
 
-- `atticus/api/` — FastAPI factory, health/ready, structured error mapping
+- `atticus/api/` — FastAPI factory, health/ready, `/v1` conversations/runs, structured error mapping
+- `atticus/runs/` — FastAPI-independent run store + bounded orchestrator
 - `atticus/core/telemetry.py` — correlation IDs + redacted event sink
 - `atticus/core/errors.py` — structured `AtticusError` fields
 - `atticus/providers/base.py` — LLM provider protocol
