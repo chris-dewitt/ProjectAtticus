@@ -5,7 +5,7 @@
 - **Current implementation (Track A):** modular local CLI assistant under `atticus/` — Rich interface, orchestration helpers, OpenAI provider, SQLite memory, permission-gated tools, optional voice/desktop. This section below describes that shape.
 - **Target platform (Track B):** bounded orchestrator, policy engine, typed API, traces/replay, and evaluation hooks described in root [`SPEC.md`](../SPEC.md). See [`PORTFOLIO_ALIGNMENT.md`](PORTFOLIO_ALIGNMENT.md) for what is shipped vs planned.
 
-Do not assume Postgres, Next.js, or a `src/` layout exist in the tree today. An optional FastAPI API exists under `atticus/api/` with health plus bounded runs (`atticus/runs/`; ADR-010/011) — not a full approvals/traces platform.
+Do not assume Postgres, Next.js, or a `src/` layout exist in the tree today. An optional FastAPI API exists under `atticus/api/` with health, bounded runs, citations, and a retro `/ui` terminal (`atticus/runs/`, ADR-010–012) — not a full approvals/traces platform.
 
 ## Architectural thesis
 

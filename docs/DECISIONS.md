@@ -125,3 +125,23 @@ Implications:
 3. Approvals, traces, sandbox, and Postgres remain later milestones.
 4. Live provider calls from the API require real credentials; CI uses `mock` only.
 5. Update portfolio alignment when claiming further M1/M2 progress.
+
+## ADR-012 — Retro terminal UI + unified citation provenance (M2 slice)
+
+Decision: ship a local same-origin retro CRT/terminal web UI under `/ui` from `atticus-api`, and unify read-tool provenance into `atticus.citation.v1` JSON records in the existing `data/citations` directory.
+
+Includes:
+
+- Phosphor-green terminal UI (computer default on `127.0.0.1`; phone via explicit `--lan`)
+- Structured citations for `/browse`, `/file read`, and `/code-search`
+- CLI `/citations list|show <id>` and API `GET /v1/citations[/{id}]`
+- Legacy browse JSON normalized on read
+
+Reason: Boss asked for a terminal/hacker interface usable on computer or phone, and Track B M2 requires structured citations/provenance. Evolving the browse citation store avoids a parallel provenance system.
+
+Implications:
+
+1. UI defaults to enabled but still bound to `api.host` (loopback unless `--lan`).
+2. No public internet exposure and no auth token yet — LAN mode is trusted-network only.
+3. Approvals/traces/sandbox remain later milestones.
+4. Citation artifacts may include local file paths; treat the citations directory as sensitive.

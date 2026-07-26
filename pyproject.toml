@@ -62,6 +62,9 @@ atticus-api = "atticus.api_server:main"
 [tool.setuptools.packages.find]
 where = ["."]
 
+[tool.setuptools.package-data]
+atticus = ["api/static/retro/*"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]

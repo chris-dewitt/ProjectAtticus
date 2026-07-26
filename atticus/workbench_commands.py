@@ -436,9 +436,20 @@ def handle_tool_slash(cmd: str, args: list[str], ctx: ToolCliContext) -> bool:
                 _ensure_file_tools(ctx)
                 path = resolve_under_approved(ctx.cfg, " ".join(args[1:]))
                 text = wf.read_text(path, max_bytes=ctx.cfg.tools.files.max_read_bytes)
+                from atticus.services import citations as cite_svc
+
+                cite_dir = cite_svc.citation_dir_from_config(ctx.cfg.tools.browser.citation_dir)
+                record = cite_svc.from_local_file(
+                    path=path,
+                    text=text,
+                    max_bytes=ctx.cfg.tools.files.max_read_bytes,
+                    tool_name="file_read",
+                )
+                saved = cite_svc.save_record(record, cite_dir)
                 ctx.console.print(f"[dim]{path}[/dim]\n{text[:8000]}")
                 if len(text) > 8000:
                     ctx.console.print("[dim](output truncated in console; full text read from disk)[/dim]")
+                ctx.console.print(f"[dim]Citation:[/dim] {saved.id}  →  {saved.saved_path}")
                 return True
             if sub == "search" and len(args) >= 2:
                 _ensure_file_tools(ctx)
@@ -493,8 +504,14 @@ def handle_tool_slash(cmd: str, args: list[str], ctx: ToolCliContext) -> bool:
             if not hits:
                 ctx.console.print("No matches in *.py files (narrow filter). Try a simpler pattern.")
             else:
+                from atticus.services import citations as cite_svc
+
+                cite_dir = cite_svc.citation_dir_from_config(ctx.cfg.tools.browser.citation_dir)
                 for p, line in hits[:100]:
+                    record = cite_svc.from_code_search(path=p, line=line, pattern=pattern)
+                    saved = cite_svc.save_record(record, cite_dir)
                     ctx.console.print(f"{p}: {line}")
+                    ctx.console.print(f"[dim]  Citation:[/dim] {saved.id}")
             return True
 
         if cmd == "/git" and args:
@@ -689,20 +706,32 @@ def handle_tool_slash(cmd: str, args: list[str], ctx: ToolCliContext) -> bool:
             ctx.console.print(f"[bold]{saved.title}[/bold]  (HTTP {saved.status_code})")
             ctx.console.print(f"[dim]{saved.url}[/dim]")
             ctx.console.print(saved.excerpt[:1500])
-            ctx.console.print(f"[dim]Citation saved:[/dim] {saved.saved_path}")
+            ctx.console.print(f"[dim]Citation:[/dim] {saved.citation_id}")
+            ctx.console.print(f"[dim]Saved:[/dim] {saved.saved_path}")
             return True
 
         if cmd == "/citations":
-            _ensure_browser(ctx)
-            cite_dir = Path(ctx.cfg.tools.browser.citation_dir)
-            if not cite_dir.is_absolute():
-                cite_dir = (Path.cwd() / cite_dir).resolve()
-            files = browse_svc.list_citations(cite_dir, limit=20)
-            if not files:
-                ctx.console.print("No citations saved yet. Use /browse <url>.")
+            from atticus.services import citations as cite_svc
+
+            cite_dir = cite_svc.citation_dir_from_config(ctx.cfg.tools.browser.citation_dir)
+            sub = args[0].lower() if args else "list"
+            if sub in {"list", "ls"}:
+                records = cite_svc.list_records(cite_dir, limit=20)
+                if not records:
+                    ctx.console.print(
+                        "No citations saved yet. Use /browse, /file read, or /code-search."
+                    )
+                    return True
+                for record in records:
+                    ctx.console.print(
+                        f"{record.id}  [{record.kind}]  {record.title}  →  {record.source_uri}"
+                    )
                 return True
-            for path in files:
-                ctx.console.print(str(path))
+            if sub == "show" and len(args) >= 2:
+                record = cite_svc.get_record(cite_dir, args[1].strip())
+                ctx.console.print_json(data=record.to_dict())
+                return True
+            ctx.console.print("Usage: /citations [list] | /citations show <citation_id>")
             return True
 
         if cmd == "/summarize" and len(args) >= 1:

@@ -1,6 +1,6 @@
 # Track B local API
 
-Status: M0 health + M1 bounded runs (ADR-010, ADR-011)
+Status: M0 health + M1 bounded runs + M2 citations + retro `/ui` (ADR-010–012)
 
 ## Install and run
 
@@ -8,14 +8,21 @@ Status: M0 health + M1 bounded runs (ADR-010, ADR-011)
 cd C:\Users\DELL\Documents\GitHub\ProjectAtticus
 pip install -e ".[api]"
 atticus-api
+# UI: http://127.0.0.1:8000/ui/
+# Phone/LAN (trusted network only):
+atticus-api --lan
 ```
 
 Defaults (from `config/atticus.example.yaml`):
 
 - host: `127.0.0.1`
 - port: `8000`
+- retro UI: on (`api.ui_enabled: true`) at `/ui/`
 - OpenAPI docs: off (`api.docs_enabled: false`)
 - runs DB: `data/atticus_runs.sqlite3`
+- citations dir: `tools.browser.citation_dir` (`data/citations`)
+
+See also [`docs/TERMINAL_UI.md`](TERMINAL_UI.md).
 
 ## Health
 
@@ -94,9 +101,19 @@ Send `Idempotency-Key` on `POST /v1/conversations/{id}/messages` or `POST /v1/ru
 - Raw Track A chat transcripts are still not stored by default.
 - Do not point the API at cloud hosts without an explicit later ADR.
 
+## Citations / provenance (M2)
+
+| Method | Path | Meaning |
+|--------|------|---------|
+| GET | `/v1/citations` | List recent structured citations |
+| GET | `/v1/citations/{id}` | Fetch one citation record |
+
+Schema version: `atticus.citation.v1` (stable id, kind, source URI, sha256, evidence spans, tool name, trust flags). Produced by CLI `/browse`, `/file read`, `/code-search`. Legacy browse JSON is normalized on read.
+
 ## Out of scope (later milestones)
 
 - Approvals API and policy engine objects (M3)
 - Trace viewer / replay UI (M4)
 - EvalForge suites (M5)
 - Postgres / Redis / Docker Compose
+- Authenticated LAN pairing token for phone access

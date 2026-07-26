@@ -64,7 +64,7 @@ Track B is **not started as a platform rewrite**. Do not present FastAPI, Postgr
 |-----------|----------------------|-----------------------------|--------------|
 | M0 | Skeleton, typed config, API health, CI, telemetry | Partial + M0 health slice (`atticus-api`, structured errors, telemetry hooks) | Broader CI (lint/type/security), OTel exporter |
 | M1 | Conversation, provider, persisted bounded run | Partial + `/v1` conversations/runs (SQLite, checkpoints, cancel, idempotency) | Async workers, richer provider capability metadata |
-| M2 | Read-only file/search + citations | Partial (`/file`, `/code-search`) | Citation/provenance schema, structured artifacts |
+| M2 | Read-only file/search + citations | Partial + `atticus.citation.v1` + `/v1/citations` + retro `/ui` | Richer locators, run linkage, read-tool HTTP execute APIs |
 | M3 | Policy engine, write tool, approvals, audit | Partial (permission classes, y/N, audit table, file write) | First-class policy decisions, approval API, idempotency |
 | M4 | Memory controls, sandbox, replay, trace viewer | Partial (memory forget/prefs) | Sandbox, replay, trace viewer |
 | M5 | Adversarial evals, routing, demo, deploy docs | Minimal (router skeleton, pytest) | EvalForge suite, real multi-provider routing, signature demo |
@@ -86,8 +86,8 @@ Track A today can support pieces (`/file`, memory notes, `/gh` read APIs, approv
 
 Portfolio reviewers and agents must **not** claim these as done:
 
-- Typed HTTP API for approvals/traces (health + conversations/runs exist in M0/M1; approvals/traces still open)
-- Next.js (or other) production web UI
+- Typed HTTP API for approvals/traces (health + conversations/runs/citations exist; approvals/traces still open)
+- Production Next.js web UI (local retro terminal `/ui` exists; not Next.js)
 - PostgreSQL / Redis / object storage / Docker Compose local stack
 - Bounded orchestrator with persisted checkpoints and cancel
 - Policy engine as a first-class decision object
@@ -103,7 +103,8 @@ Portfolio reviewers and agents must **not** claim these as done:
 
 When extending the repo toward Track B, prefer evolving these existing seams:
 
-- `atticus/api/` — FastAPI factory, health/ready, `/v1` conversations/runs, structured error mapping
+- `atticus/api/` — FastAPI factory, health/ready, `/v1` conversations/runs/citations, retro `/ui`
+- `atticus/services/citations.py` — unified citation/provenance records
 - `atticus/runs/` — FastAPI-independent run store + bounded orchestrator
 - `atticus/core/telemetry.py` — correlation IDs + redacted event sink
 - `atticus/core/errors.py` — structured `AtticusError` fields

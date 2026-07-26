@@ -7,8 +7,10 @@ from pathlib import Path
 from typing import Any, Callable
 
 from fastapi import FastAPI, Request, Response
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
+from atticus.api.citations import build_citations_router
 from atticus.api.errors import atticus_error_handler, unhandled_error_handler
 from atticus.api.health import live_response, load_ready_response
 from atticus.api.runs import build_runs_router
@@ -62,9 +64,9 @@ def create_app(
     redoc_url = "/redoc" if config.api.docs_enabled else None
     app = FastAPI(
         title="ProjectAtticus API",
-        version="0.2.0",
+        version="0.3.0",
         description=(
-            "Track B local API: health/readiness plus bounded conversation runs. "
+            "Track B local API: health, bounded runs, citations, and optional retro /ui. "
             "Approvals/traces remain later milestones."
         ),
         docs_url=docs_url,
@@ -111,6 +113,19 @@ def create_app(
     app.add_exception_handler(AtticusError, atticus_error_handler)
     app.add_exception_handler(Exception, unhandled_error_handler)
     app.include_router(build_runs_router())
+    app.include_router(build_citations_router())
+
+    static_dir = Path(__file__).resolve().parent / "static" / "retro"
+    if config.api.ui_enabled and static_dir.is_dir():
+        app.mount("/ui", StaticFiles(directory=str(static_dir), html=True), name="retro_ui")
+
+        @app.get("/")
+        async def root_redirect() -> RedirectResponse:
+            return RedirectResponse(url="/ui/")
+
+        @app.get("/terminal")
+        async def terminal_alias() -> FileResponse:
+            return FileResponse(static_dir / "index.html")
 
     @app.middleware("http")
     async def correlation_middleware(request: Request, call_next: Any) -> Response:

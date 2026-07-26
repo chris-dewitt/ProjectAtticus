@@ -19,12 +19,12 @@ Package version `1.0.0` labels this Track A milestone. A full GUI chat remains u
 
 **Track B — portfolio agent platform (in progress / planned):**
 
-- **M0/M1 slices started:** optional local FastAPI health + bounded runs (`pip install -e ".[api]"`, `atticus-api`) — see ADR-010/011 and [`docs/API.md`](docs/API.md)
+- **M0–M2 slices started:** local FastAPI health + bounded runs + structured citations + retro terminal UI (`pip install -e ".[api]"`, `atticus-api`, open `/ui/`) — see ADR-010–012, [`docs/API.md`](docs/API.md), [`docs/TERMINAL_UI.md`](docs/TERMINAL_UI.md)
 - Policy engine, approvals API, traces/evals, Postgres still planned per [`SPEC.md`](SPEC.md)
 - Engineering bar in [`docs/SHARED_ENGINEERING_STANDARD.md`](docs/SHARED_ENGINEERING_STANDARD.md)
 - Honest capability map in [`docs/PORTFOLIO_ALIGNMENT.md`](docs/PORTFOLIO_ALIGNMENT.md)
 
-Do not present Postgres, Next.js, sandboxes, OTel exporters, approvals APIs, or M2–M5 as already complete. M0/M1 are vertical slices, not the full shared-standard bar.
+Do not present Postgres, Next.js, sandboxes, OTel exporters, approvals APIs, or M3–M5 as already complete. M0–M2 are vertical slices, not the full shared-standard bar.
 
 ## North star
 
@@ -157,20 +157,20 @@ Slash commands in the CLI: `/help`, `/exit`, `/provider` (`openai` | `anthropic`
 
 JS-heavy browser automation and a full GUI chat are **not** finished here. Track B run/approval APIs, orchestrator, traces, and EvalForge remain unfinished. See [`docs/DESKTOP_WINDOWS.md`](docs/DESKTOP_WINDOWS.md).
 
-### Track B API (M0 health + M1 bounded runs)
+### Track B API + retro terminal UI
 
 ```powershell
 pip install -e ".[api]"
 atticus-api
+# UI   http://127.0.0.1:8000/ui/
 # GET  http://127.0.0.1:8000/health/live
-# GET  http://127.0.0.1:8000/health/ready
-# POST http://127.0.0.1:8000/v1/conversations
 # POST http://127.0.0.1:8000/v1/conversations/{id}/messages
-# GET  http://127.0.0.1:8000/v1/runs/{id}
-# POST http://127.0.0.1:8000/v1/runs/{id}/cancel
+# GET  http://127.0.0.1:8000/v1/citations
+# Phone/LAN (trusted network only):
+atticus-api --lan
 ```
 
-OpenAPI docs stay off unless `api.docs_enabled: true`. Details: [`docs/API.md`](docs/API.md).
+CRT/phosphor terminal UI details: [`docs/TERMINAL_UI.md`](docs/TERMINAL_UI.md). API details: [`docs/API.md`](docs/API.md).
 
 ### Full product — one step at a time (backlog)
 
@@ -185,6 +185,7 @@ OpenAPI docs stay off unless `api.docs_enabled: true`. Details: [`docs/API.md`](
 9. **Done:** Windows tray, confirmation-gated autostart, and a read-only desktop status view.
 10. **Done (M0 slice):** local health/readiness API + structured errors + telemetry hooks (`.[api]`, `atticus-api`).
 11. **Done (M1 slice):** `/v1/conversations` + `/v1/runs` with checkpoints, cancel, and idempotency (`atticus/runs/`).
-12. **Next good step:** Track B **M2** — structured citations/provenance for read tools (or M1 async workers).
+12. **Done (M2 slice + retro UI):** `atticus.citation.v1` provenance, `/v1/citations`, phosphor terminal at `/ui/`.
+13. **Next good step:** Track B **M3** — first-class policy/approval API objects (or run↔citation linkage).
 
 Do not add real keys to `.env.example`. Keep `.env` and `config/atticus.yaml` out of git if they contain secrets or machine-specific paths.

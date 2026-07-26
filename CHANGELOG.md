@@ -32,6 +32,12 @@ Track A packaging milestone (personal assistant), not Track B M0–M5 completion
 
 ## Unreleased
 
+### Retro terminal UI + Track B M2 citations
+
+- Local CRT/phosphor web terminal at `/ui/` (phone via `atticus-api --lan`)
+- Unified `atticus.citation.v1` provenance for browse/file/code-search
+- `GET /v1/citations`, CLI `/citations list|show`, ADR-012
+
 ### Track B M1 slice
 
 - Bounded run domain (`atticus/runs/`) with SQLite persistence and checkpoints
