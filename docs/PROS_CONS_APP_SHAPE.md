@@ -1,6 +1,6 @@
 # App Shape Options — Pros and Cons
 
-Boss asked which first interface is best. This document compares the major options.
+The Speaker asked which first interface is best. This document compares the major options.
 
 ## Option 1: Terminal / CLI app
 
@@ -103,4 +103,4 @@ Use this sequence:
 5. Local browser or lightweight desktop UI.
 6. System tray assistant.
 
-This gets Boss to a working Atticus quickly without sacrificing the grand vision.
+This gets The Speaker to a working Atticus quickly without sacrificing the grand vision.

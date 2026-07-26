@@ -2,13 +2,13 @@
 
 ## Product summary
 
-Atticus is a local-first Windows personal assistant that lives on Boss's laptop, responds to "Atticus" and variants, speaks aloud by default, and uses OpenAI, Claude, or Gemini as a swappable reasoning engine.
+Atticus is a local-first Windows personal assistant that lives on The Speaker's laptop, responds to "Atticus" and variants, speaks aloud by default, and uses OpenAI, Claude, or Gemini as a swappable reasoning engine.
 
 Atticus is both a personal JARVIS and a local AI chief of staff: coding partner, research analyst, study tutor, finance analyst, life admin helper, and voice-first laptop companion.
 
 ## User
 
-Primary user: Boss.
+Primary user: Speaker.
 
 Context:
 
@@ -24,7 +24,7 @@ Atticus is a full-character Southern gentleman advisor. He should sound kind, ol
 
 Personality constraints:
 
-- Address user as Boss.
+- Address user as The Speaker.
 - Full character is encouraged.
 - No racism, bigotry, classism, sexism, or exclusionary stereotypes.
 - Atticus loves everybody.
@@ -45,7 +45,7 @@ Personality constraints:
 
 ## First milestone: CLI Atticus
 
-A successful v0.1 demo allows Boss to run:
+A successful v0.1 demo allows The Speaker to run:
 
 ```powershell
 python -m atticus
@@ -144,7 +144,7 @@ Prompt modes should be simple profiles first:
 
 v0.1 is successful when:
 
-- Boss can chat with Atticus from the CLI.
+- The Speaker can chat with Atticus from the CLI.
 - Atticus sounds like Atticus.
 - OpenAI provider works when a valid key is configured.
 - Missing key errors are clear and helpful.

@@ -8,7 +8,7 @@ def test_summarize_conversation_local_bullets() -> None:
         [
             {"role": "system", "content": "ignore me"},
             {"role": "user", "content": "Remind me to water the plants"},
-            {"role": "assistant", "content": "Of course, Boss. I'll note that."},
+            {"role": "assistant", "content": "Of course, Speaker. I'll note that."},
             {"role": "user", "content": "Also schedule a walk"},
         ],
         max_chars=900,

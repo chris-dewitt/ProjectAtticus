@@ -31,7 +31,7 @@ def client(repo_root: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
         config_path=path,
         telemetry=Telemetry(enabled=True, emit_stderr=False, service_name="ui-test"),
         run_store=store,
-        provider_factory=lambda _name: MockProvider(reply="Link established, Boss."),
+        provider_factory=lambda _name: MockProvider(reply="Link established, Speaker."),
         default_provider="mock",
     )
     return TestClient(app)
@@ -53,6 +53,10 @@ def test_retro_ui_is_served(client: TestClient) -> None:
     assert js.status_code == 200
     assert "authenticateApprovals" in js.text
     assert "registerServiceWorker" in js.text
+    assert "openModal" in js.text
+    assert "window.prompt(" not in js.text
+    assert "modal-root" in page.text
+    assert "The Listener" in page.text or "Speaker" in page.text
     manifest = client.get("/ui/manifest.webmanifest")
     assert manifest.status_code == 200
     assert "Atticus" in manifest.text

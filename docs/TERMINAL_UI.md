@@ -5,8 +5,11 @@ Status: local web terminal for computer + installable phone/desktop PWA
 ## Look and feel
 
 Subdued classical terminal: graphite field, soft brass/amber phosphor text,
-IBM Plex Mono, thin rules, restrained motion. **ATTICUS** remains the brand
-hero. Same-origin with the local API.
+IBM Plex Mono, thin rules, restrained motion. **ATTICUS** (The Listener)
+remains the brand hero for **The Speaker**. Same-origin with the local API.
+
+Buttons (Settings, Auth, Trace, Citations, Demo, approvals) use **in-page
+modals** — not `window.prompt` — so they work inside the desktop webview.
 
 ## Run (computer)
 

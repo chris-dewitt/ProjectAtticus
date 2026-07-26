@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 
 @dataclass
 class VoiceSessionState:
-    """Boss can disarm all microphone capture without editing YAML."""
+    """The Speaker can disarm all microphone capture without editing YAML."""
 
     voice_input_armed: bool = field(default=True)
 

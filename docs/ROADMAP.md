@@ -88,4 +88,4 @@ python scripts/run_signature_demo.py
 - Broader gateway handlers (gmail/calendar/git publish)
 - Optional Postgres repository backend behind the same interfaces
 - Managed OTLP collector wiring
-- Live Azure environment from `infra/terraform` when Boss wants hosting
+- Live Azure environment from `infra/terraform` when The Speaker wants hosting

@@ -54,7 +54,7 @@ def _approval(client: TestClient) -> dict:
             "permission_class": "write",
             "action_summary": "Write report.md",
             "inputs": {"path": "report.md", "content_sha256": "abc"},
-            "actor": "boss",
+            "actor": "speaker",
         },
     )
     assert response.status_code == 200
@@ -96,7 +96,7 @@ def test_approval_decision_is_token_and_phrase_gated(client: TestClient) -> None
     approval = _approval(client)
     payload = {
         "decision": "approve",
-        "actor": "boss",
+        "actor": "speaker",
         "action_digest": approval["action_digest"],
         "confirmation": f"APPROVE {approval['confirmation_hint']}",
         "rationale": "Exact action reviewed.",

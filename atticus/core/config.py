@@ -14,7 +14,7 @@ from atticus.core.errors import ConfigurationError
 class AssistantConfig(BaseModel):
     model_config = ConfigDict(extra="ignore")
     name: str = "Atticus"
-    user_address: str = "Boss"
+    user_address: str = "The Speaker"
     default_mode: str = "default"
     default_provider: str = "openai"
     repo_path: str | None = None
@@ -140,7 +140,7 @@ class ToolsBrowserConfig(BaseModel):
     """Empty = any non-local http(s) host after approval; non-empty = host allowlist."""
     max_response_bytes: int = 500_000
     citation_dir: str = "data/citations"
-    user_agent: str = "ProjectAtticus/1.0 (+local; Boss-approved fetch)"
+    user_agent: str = "ProjectAtticus/1.0 (+local; The Speaker-approved fetch)"
 
 
 class ToolsEmailConfig(BaseModel):

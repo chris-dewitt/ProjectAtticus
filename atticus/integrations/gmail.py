@@ -185,6 +185,6 @@ def status_text(*, client_secrets: Path | None, token_path: Path, deps_ok: bool)
         f"token cache: {token_path}",
         f"token present: {token_present}",
         "Scopes: readonly for inbox/read; compose required for draft/send.",
-        "Send always requires explicit Boss confirmation.",
+        "Send always requires explicit The Speaker confirmation.",
     ]
     return "\n".join(lines)

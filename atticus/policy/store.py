@@ -99,7 +99,7 @@ class ApprovalStore:
               correlation_id TEXT,
               inputs_json TEXT NOT NULL DEFAULT '{}',
               resource TEXT,
-              request_actor TEXT NOT NULL DEFAULT 'boss',
+              request_actor TEXT NOT NULL DEFAULT 'speaker',
               external_data INTEGER NOT NULL DEFAULT 0,
               destructive INTEGER NOT NULL DEFAULT 0,
               FOREIGN KEY (policy_decision_id) REFERENCES policy_decisions(id)
@@ -139,7 +139,7 @@ class ApprovalStore:
         migrations = {
             "inputs_json": "ALTER TABLE approval_requests ADD COLUMN inputs_json TEXT NOT NULL DEFAULT '{}'",
             "resource": "ALTER TABLE approval_requests ADD COLUMN resource TEXT",
-            "request_actor": "ALTER TABLE approval_requests ADD COLUMN request_actor TEXT NOT NULL DEFAULT 'boss'",
+            "request_actor": "ALTER TABLE approval_requests ADD COLUMN request_actor TEXT NOT NULL DEFAULT 'speaker'",
             "external_data": "ALTER TABLE approval_requests ADD COLUMN external_data INTEGER NOT NULL DEFAULT 0",
             "destructive": "ALTER TABLE approval_requests ADD COLUMN destructive INTEGER NOT NULL DEFAULT 0",
         }
@@ -509,7 +509,7 @@ class ApprovalStore:
             expires_at=str(row["expires_at"]),
             inputs=json.loads(inputs_raw or "{}"),
             resource=row["resource"] if "resource" in keys else None,
-            request_actor=str(row["request_actor"]) if "request_actor" in keys and row["request_actor"] else "boss",
+            request_actor=str(row["request_actor"]) if "request_actor" in keys and row["request_actor"] else "speaker",
             external_data=bool(row["external_data"]) if "external_data" in keys else False,
             destructive=bool(row["destructive"]) if "destructive" in keys else False,
             decided_at=row["decided_at"],

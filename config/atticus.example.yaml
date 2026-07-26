@@ -3,7 +3,7 @@
 
 assistant:
   name: Atticus
-  user_address: Boss
+  user_address: The Speaker
   default_mode: default
   default_provider: openai
   # Leave repo_path unset so prompts load from the repo root (parent of config/).

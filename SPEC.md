@@ -27,7 +27,7 @@ A trustworthy agent platform that can research, reason, and use computer or know
 
 Developers, technical knowledge workers, and security-conscious power users who need an auditable assistant across local and external systems.
 
-Track A additionally serves a single primary operator ("Boss") on a Windows laptop with a full-character Southern gentleman persona. Persona and Windows-first UX remain non-negotiable on Track A (see ADR-009).
+Track A additionally serves a single primary operator ("The Speaker") on a Windows laptop with a full-character Southern gentleman persona. Persona and Windows-first UX remain non-negotiable on Track A (see ADR-009).
 
 ## 3. Product principles
 
@@ -231,4 +231,4 @@ Do not relocate `atticus/` to `src/` without an ADR and an explicit migration ta
 6. Implement one representative end-to-end fixture for the active milestone.
 7. Record assumptions and deferred decisions in ADRs and issues.
 
-Do not begin later Track B milestones until the active milestone's acceptance evidence is recorded, unless Boss explicitly requests otherwise.
+Do not begin later Track B milestones until the active milestone's acceptance evidence is recorded, unless The Speaker explicitly requests otherwise.

@@ -4,7 +4,7 @@
 
 Atticus should remember useful context, but not hoard private data.
 
-Memory is enabled by default because Boss requested default memory. However, raw conversations are not stored by default. Store summaries and preferences.
+Memory is enabled by default because The Speaker requested default memory. However, raw conversations are not stored by default. Store summaries and preferences.
 
 ## Memory types
 
@@ -12,7 +12,7 @@ Memory is enabled by default because Boss requested default memory. However, raw
 
 Examples:
 
-- preferred name: Boss;
+- preferred name: The Speaker;
 - preferred provider: OpenAI;
 - project repo path;
 - voice response preference;
@@ -97,7 +97,7 @@ When forgetting, Atticus should confirm what was forgotten.
 
 ## Sensitive memory handling
 
-Do not store health, legal, financial, political, religious, or intimate details unless Boss explicitly requests it. If such a detail appears incidental, summarize around it rather than storing it directly.
+Do not store health, legal, financial, political, religious, or intimate details unless The Speaker explicitly requests it. If such a detail appears incidental, summarize around it rather than storing it directly.
 
 ## Future vector memory
 

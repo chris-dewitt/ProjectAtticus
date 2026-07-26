@@ -15,7 +15,7 @@ These instructions apply to all coding agents working in this repository, includ
 - **Track A (shipped):** Windows personal assistant under `atticus/` — CLI, persona, SQLite memory, permission gates, optional voice, opt-in tools. This is the working product.
 - **Track B (planned):** Agent platform in `SPEC.md` — orchestrator, policy engine, API/traces/evals. Not shipped.
 - Do **not** re-scaffold Phase 1 CLI; it already exists.
-- Do **not** build Track B milestones (M0–M5) unless Boss explicitly asks for that milestone.
+- Do **not** build Track B milestones (M0–M5) unless The Speaker explicitly asks for that milestone.
 - When extending tools or approvals, prefer SPEC-shaped boundaries: typed tools, audit events, no silent external writes, treat retrieved content as untrusted.
 - Stack defaults in the shared standard (FastAPI, Postgres, Next.js, Docker, OTel, Azure) are aspirational until an ADR adopts them (see ADR-009).
 
@@ -33,7 +33,8 @@ The user's selected design constraints:
 - Wake phrases: "Atticus," "Hey Atticus," and reasonable variants.
 - Push-to-talk: fallback only if absolutely necessary.
 - Persona: full-character Southern gentleman advisor; kind, warm, loyal, and dramatic enough to be memorable.
-- Address user as: Boss.
+- Address user as: The Speaker (never Boss).
+- Atticus identity: The Listener.
 - Personality boundary: no racism, no bigotry, no exclusionary stereotypes; Atticus loves everybody.
 - Privacy: extremely important.
 - Memory: on by default, but only summaries and preferences by default.
@@ -165,7 +166,7 @@ Future routing behavior:
 - OpenAI default for general reasoning, coding, and tool orchestration.
 - Claude optional for long-form writing, code review, and document reasoning.
 - Gemini optional for multimodal and Google ecosystem tasks.
-- Always let Boss override the provider manually.
+- Always let The Speaker override the provider manually.
 
 ## Security and privacy requirements
 
@@ -220,7 +221,7 @@ Do not store by default:
 - raw transcripts;
 - full local file contents;
 - secrets;
-- health, legal, financial, or sensitive personal details unless Boss explicitly requests it;
+- health, legal, financial, or sensitive personal details unless The Speaker explicitly requests it;
 - third-party private data.
 
 Required commands:
@@ -238,7 +239,7 @@ Voice:
 
 - Southern gentleman.
 - Warm, old-soul, literate, practical.
-- Loyal to Boss.
+- Loyal to The Speaker.
 - Full character is allowed.
 - Avoid corny caricature.
 - Avoid racism, classism, sexism, and exclusionary language.
@@ -247,7 +248,7 @@ Voice:
 
 Example tone:
 
-> Of course, Boss. I’ve taken a good look at the matter, and here’s the sensible path forward.
+> Of course, Speaker. I’ve taken a good look at the matter, and here’s the sensible path forward.
 
 ## Testing requirements
 
@@ -303,4 +304,4 @@ Track A Phase 1–6 foundations are already implemented in `atticus/` (CLI, conf
 
 New agents should extend the existing package. Typical next Track A work includes real Anthropic/Gemini providers, Gmail/Calendar OAuth behind confirmations, deeper coding tools, or desktop wiring — only when requested.
 
-Track B work starts only when Boss asks for a specific SPEC milestone (usually M0). Do not invent a parallel `src/` tree or claim M0–M5 complete.
+Track B work starts only when The Speaker asks for a specific SPEC milestone (usually M0). Do not invent a parallel `src/` tree or claim M0–M5 complete.

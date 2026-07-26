@@ -276,7 +276,7 @@ User request
 
 The main security boundary is between local user data and cloud providers.
 
-Any flow that crosses this boundary must ask Boss first.
+Any flow that crosses this boundary must ask The Speaker first.
 
 Boundary examples:
 

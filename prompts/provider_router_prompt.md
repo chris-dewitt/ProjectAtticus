@@ -12,7 +12,7 @@ Routing hints:
 
 Privacy rule:
 
-If the request requires sending local file contents, private code, transcripts, emails, calendar data, or sensitive personal data to a provider, do not route yet. Ask Boss for permission first.
+If the request requires sending local file contents, private code, transcripts, emails, calendar data, or sensitive personal data to a provider, do not route yet. Ask The Speaker for permission first.
 
 Output JSON shape:
 

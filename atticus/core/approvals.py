@@ -34,7 +34,7 @@ def request_tool_approval(
     *,
     prompt_prefix: str = "",
 ) -> bool:
-    """Prompt Boss, record the decision in the audit log, return True if approved."""
+    """Prompt Speaker, record the decision in the audit log, return True if approved."""
     body = f"{prompt_prefix}{request.action_summary}\nApprove? [y/N] "
     approved = parse_yes(source.ask(body))
     store.record_tool_approval(

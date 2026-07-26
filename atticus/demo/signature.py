@@ -283,7 +283,7 @@ def _build_issue_body(table: list[dict[str, str]], citation_ids: list[str]) -> s
         "## Context",
         "",
         "Synthetic fixture research for Atticus Track B signature demo.",
-        "Do **not** publish until Boss approves.",
+        "Do **not** publish until The Speaker approves.",
         "",
         "## Comparison",
         "",

@@ -22,7 +22,7 @@ Provider interface should support:
 
 Default router behavior in v0.1:
 
-- Use OpenAI unless Boss explicitly requests another provider.
+- Use OpenAI unless The Speaker explicitly requests another provider.
 - Include a `ProviderRouter` class with a simple strategy hook for future automatic routing.
 
 Future router hints:

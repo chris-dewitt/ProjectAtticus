@@ -17,12 +17,20 @@
   const linkEl = document.getElementById("link-status");
   const sessionEl = document.getElementById("session");
 
+  const modalRoot = document.getElementById("modal-root");
+  const modalTitle = document.getElementById("modal-title");
+  const modalCopy = document.getElementById("modal-copy");
+  const modalForm = document.getElementById("modal-form");
+  const modalCancel = document.getElementById("modal-cancel");
+  const modalOk = document.getElementById("modal-ok");
+
   const state = {
     conversationId: localStorage.getItem("atticus.conversationId") || null,
     lastRunId: localStorage.getItem("atticus.lastRunId") || null,
     approvalToken: null,
     busy: false,
     deferredInstall: null,
+    modalResolver: null,
   };
 
   function line(who, text, cls = "") {
@@ -67,6 +75,78 @@
     return body;
   }
 
+  function closeModal(result) {
+    if (!modalRoot) return;
+    modalRoot.hidden = true;
+    const resolver = state.modalResolver;
+    state.modalResolver = null;
+    if (resolver) resolver(result);
+  }
+
+  /**
+   * In-page modal (works in desktop webview where window.prompt does not).
+   * fields: [{ name, label, type?, value?, options?, required? }]
+   */
+  function openModal({ title, copy = "", fields = [], okLabel = "Save" }) {
+    return new Promise((resolve) => {
+      state.modalResolver = resolve;
+      modalTitle.textContent = title;
+      modalCopy.textContent = copy;
+      modalOk.textContent = okLabel;
+      modalForm.replaceChildren();
+
+      for (const field of fields) {
+        const label = document.createElement("label");
+        label.textContent = field.label;
+        let input;
+        if (field.type === "select") {
+          input = document.createElement("select");
+          for (const option of field.options || []) {
+            const opt = document.createElement("option");
+            opt.value = option.value;
+            opt.textContent = option.label;
+            if (String(option.value) === String(field.value)) opt.selected = true;
+            input.appendChild(opt);
+          }
+        } else {
+          input = document.createElement("input");
+          input.type = field.type || "text";
+          input.value = field.value == null ? "" : String(field.value);
+          if (field.placeholder) input.placeholder = field.placeholder;
+        }
+        input.name = field.name;
+        input.autocomplete = "off";
+        if (field.required !== false) input.required = true;
+        label.appendChild(input);
+        modalForm.appendChild(label);
+      }
+
+      modalRoot.hidden = false;
+      const first = modalForm.querySelector("input, select");
+      if (first) first.focus();
+    });
+  }
+
+  modalCancel.addEventListener("click", () => closeModal(null));
+  modalRoot.querySelectorAll("[data-modal-dismiss]").forEach((el) => {
+    el.addEventListener("click", () => closeModal(null));
+  });
+  modalForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const data = {};
+    const formData = new FormData(modalForm);
+    for (const [key, value] of formData.entries()) {
+      data[key] = String(value);
+    }
+    closeModal(data);
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !modalRoot.hidden) {
+      event.preventDefault();
+      closeModal(null);
+    }
+  });
+
   async function refreshSystem() {
     try {
       const live = await api("/health/live");
@@ -90,6 +170,7 @@
     try {
       const data = await api("/v1/settings");
       settingsEl.textContent = [
+        `address: ${data.assistant.user_address}`,
         `mode: ${data.assistant.default_mode}`,
         `provider: ${data.providers.default_provider}`,
         `memory: ${data.privacy.memory_enabled ? "on" : "off"}`,
@@ -106,24 +187,54 @@
   async function editSettings() {
     try {
       const current = await api("/v1/settings");
-      const provider = window.prompt(
-        "Default provider (openai|anthropic|gemini|mock):",
-        current.providers.default_provider
-      );
-      if (provider == null) return;
-      const spokenRaw = window.prompt(
-        "Spoken responses? (true/false):",
-        String(current.voice.spoken_responses)
-      );
-      if (spokenRaw == null) return;
+      const values = await openModal({
+        title: "Settings",
+        copy: "Adjust local operator toggles. Secrets stay in your environment — never here.",
+        okLabel: "Save",
+        fields: [
+          {
+            name: "default_provider",
+            label: "Default provider",
+            type: "select",
+            value: current.providers.default_provider,
+            options: [
+              { value: "openai", label: "openai" },
+              { value: "anthropic", label: "anthropic" },
+              { value: "gemini", label: "gemini" },
+              { value: "mock", label: "mock (local fixture)" },
+            ],
+          },
+          {
+            name: "spoken_responses",
+            label: "Spoken responses",
+            type: "select",
+            value: String(current.voice.spoken_responses),
+            options: [
+              { value: "true", label: "true" },
+              { value: "false", label: "false" },
+            ],
+          },
+          {
+            name: "default_mode",
+            label: "Default mode",
+            type: "text",
+            value: current.assistant.default_mode || "default",
+          },
+        ],
+      });
+      if (!values) {
+        line("system", "Settings closed without changes.", "system");
+        return;
+      }
       const patched = await api("/v1/settings", {
         method: "PATCH",
         body: JSON.stringify({
-          default_provider: provider.trim(),
-          spoken_responses: spokenRaw.trim().toLowerCase() === "true",
+          default_provider: values.default_provider.trim(),
+          spoken_responses: values.spoken_responses.trim().toLowerCase() === "true",
+          default_mode: values.default_mode.trim(),
         }),
       });
-      line("system", `settings updated :: ${patched.changed.join(", ")}`, "system");
+      line("system", `Settings updated :: ${patched.changed.join(", ")}`, "system");
       refreshSettings();
     } catch (err) {
       line("system", String(err.message || err), "error");
@@ -135,7 +246,7 @@
       const data = await api("/v1/citations?limit=12");
       const items = data.items || [];
       if (!items.length) {
-        citesEl.textContent = "// no citations yet\n// use SIG DEMO or CLI /browse";
+        citesEl.textContent = "// no citations yet\n// use Demo or CLI /browse";
         return;
       }
       citesEl.textContent = items
@@ -153,6 +264,7 @@
     const id = runId || state.lastRunId;
     if (!id) {
       traceEl.textContent = "// no run id yet";
+      line("system", "No run to trace yet — send a message or run Demo.", "system");
       return;
     }
     try {
@@ -170,14 +282,16 @@
         spanLines || "// no spans",
         `checkpoints: ${(replay.checkpoints || []).map((c) => c.name).join(" → ")}`,
       ].join("\n");
+      line("system", `Trace loaded for ${id}.`, "system");
     } catch (err) {
       traceEl.textContent = `// trace unavailable\n${err.message || err}`;
+      line("system", String(err.message || err), "error");
     }
   }
 
   async function refreshApprovals() {
     if (!state.approvalToken) {
-      approvalsEl.textContent = "// queue locked\n// select AUTH APPROVALS";
+      approvalsEl.textContent = "// queue locked\n// select Auth";
       return;
     }
     try {
@@ -211,21 +325,21 @@
 
         const approve = document.createElement("button");
         approve.type = "button";
-        approve.textContent = "APPROVE";
+        approve.textContent = "Approve";
         approve.addEventListener("click", () => decideApproval(approval, true));
         card.appendChild(approve);
 
         const deny = document.createElement("button");
         deny.type = "button";
         deny.className = "deny";
-        deny.textContent = "DENY";
+        deny.textContent = "Deny";
         deny.addEventListener("click", () => decideApproval(approval, false));
         card.appendChild(deny);
 
         if (approval.status === "approved") {
           const execBtn = document.createElement("button");
           execBtn.type = "button";
-          execBtn.textContent = "EXECUTE";
+          execBtn.textContent = "Execute";
           execBtn.addEventListener("click", () => executeApproval(approval));
           card.appendChild(execBtn);
         }
@@ -239,32 +353,45 @@
   async function decideApproval(approval, approve) {
     const verb = approve ? "APPROVE" : "DENY";
     const required = `${verb} ${approval.confirmation_hint}`;
-    const confirmation = window.prompt(
-      `Exact action digest confirmation required:\n${required}`,
-      ""
-    );
-    if (confirmation !== required) {
-      line("system", "approval cancelled: confirmation mismatch", "error");
+    const values = await openModal({
+      title: approve ? "Approve action" : "Deny action",
+      copy: `Type this exact confirmation phrase:\n${required}`,
+      okLabel: approve ? "Approve" : "Deny",
+      fields: [
+        {
+          name: "confirmation",
+          label: "Confirmation phrase",
+          type: "text",
+          value: "",
+          placeholder: required,
+        },
+      ],
+    });
+    if (!values) {
+      line("system", "Approval cancelled.", "system");
       return;
     }
-    const token = state.approvalToken;
-    if (!token) {
-      line("system", "approval cancelled: token missing", "error");
+    if (values.confirmation !== required) {
+      line("system", "Approval cancelled: confirmation mismatch.", "error");
+      return;
+    }
+    if (!state.approvalToken) {
+      line("system", "Approval cancelled: token missing. Use Auth first.", "error");
       return;
     }
     try {
       const decided = await api(`/v1/approvals/${approval.id}/decision`, {
         method: "POST",
-        headers: { "X-Atticus-Approval-Token": token },
+        headers: { "X-Atticus-Approval-Token": state.approvalToken },
         body: JSON.stringify({
           decision: approve ? "approve" : "deny",
-          actor: "boss",
+          actor: "speaker",
           action_digest: approval.action_digest,
-          confirmation,
-          rationale: "Decision from retro terminal UI.",
+          confirmation: values.confirmation,
+          rationale: "Decision from Atticus terminal UI.",
         }),
       });
-      line("system", `approval ${decided.id} :: ${decided.status}`, "system");
+      line("system", `Approval ${decided.id} :: ${decided.status}`, "system");
       refreshApprovals();
     } catch (err) {
       line("system", String(err.message || err), "error");
@@ -273,14 +400,24 @@
 
   async function executeApproval(approval) {
     if (!state.approvalToken) {
-      line("system", "execute cancelled: auth approvals first", "error");
+      line("system", "Execute cancelled: Auth first.", "error");
       return;
     }
-    const key =
-      window.prompt("Idempotency-Key for this execution:", crypto.randomUUID()) ||
-      "";
-    if (!key.trim()) {
-      line("system", "execute cancelled: idempotency key required", "error");
+    const values = await openModal({
+      title: "Execute approved action",
+      copy: "Provide an Idempotency-Key so repeated submits do not double-run.",
+      okLabel: "Execute",
+      fields: [
+        {
+          name: "idempotency_key",
+          label: "Idempotency key",
+          type: "text",
+          value: crypto.randomUUID(),
+        },
+      ],
+    });
+    if (!values || !values.idempotency_key.trim()) {
+      line("system", "Execute cancelled.", "system");
       return;
     }
     try {
@@ -288,13 +425,13 @@
         method: "POST",
         headers: {
           "X-Atticus-Approval-Token": state.approvalToken,
-          "Idempotency-Key": key.trim(),
+          "Idempotency-Key": values.idempotency_key.trim(),
         },
         body: JSON.stringify({ actor: "atticus" }),
       });
       line(
         "system",
-        `dispatch ${result.approval_id} :: ${result.status}` +
+        `Dispatch ${result.approval_id} :: ${result.status}` +
           (result.replayed ? " (replay)" : ""),
         "system"
       );
@@ -304,13 +441,27 @@
     }
   }
 
-  function authenticateApprovals() {
-    const token = window.prompt(
-      "Enter ATTICUS_APPROVAL_TOKEN (kept in page memory only):",
-      ""
-    );
-    if (!token) return;
-    state.approvalToken = token;
+  async function authenticateApprovals() {
+    const values = await openModal({
+      title: "Authorization",
+      copy: "Enter ATTICUS_APPROVAL_TOKEN. Kept in page memory only — never written to disk.",
+      okLabel: "Unlock",
+      fields: [
+        {
+          name: "token",
+          label: "Approval token",
+          type: "password",
+          value: "",
+          placeholder: "token from your .env",
+        },
+      ],
+    });
+    if (!values || !values.token.trim()) {
+      line("system", "Auth cancelled.", "system");
+      return;
+    }
+    state.approvalToken = values.token.trim();
+    line("system", "Approval queue unlocked for this session.", "system");
     refreshApprovals();
   }
 
@@ -319,7 +470,7 @@
     state.busy = true;
     demoBtn.disabled = true;
     try {
-      line("system", "signature demo starting (synthetic fixtures)…", "system");
+      line("system", "Signature demo starting (synthetic fixtures)…", "system");
       const result = await api("/v1/demo/signature", {
         method: "POST",
         body: JSON.stringify({ artifacts_subdir: "signature_demo" }),
@@ -327,7 +478,7 @@
       state.lastRunId = result.run_id;
       localStorage.setItem("atticus.lastRunId", result.run_id);
       line(
-        "atticus",
+        "listener",
         `Demo complete. Approaches: ${result.comparison_table.map((r) => r.name).join(", ")}. ` +
           `Policy: ${result.policy_decision}. Approval: ${result.approval_id || "none"}. ` +
           `Quality ok=${result.quality_report.ok}. Stopped for approval before publish.`
@@ -355,7 +506,7 @@
     state.conversationId = created.id;
     localStorage.setItem("atticus.conversationId", created.id);
     sessionEl.textContent = `session: ${created.id}`;
-    line("system", `session opened :: ${created.id}`, "system");
+    line("system", `Session opened :: ${created.id}`, "system");
     return created.id;
   }
 
@@ -366,7 +517,7 @@
     sendBtn.disabled = true;
     try {
       const conversationId = await ensureConversation();
-      line("boss", content);
+      line("speaker", content);
       promptEl.value = "";
       const payload = await api(`/v1/conversations/${conversationId}/messages`, {
         method: "POST",
@@ -377,13 +528,13 @@
       });
       const run = payload.run;
       if (!run) {
-        line("system", "message stored; no run executed", "system");
+        line("system", "Message stored; no run executed.", "system");
         return;
       }
       state.lastRunId = run.id;
       localStorage.setItem("atticus.lastRunId", run.id);
       if (run.status === "succeeded") {
-        line("atticus", run.output_text || "(empty reply)");
+        line("listener", run.output_text || "(empty reply)");
       } else {
         line(
           "system",
@@ -409,14 +560,12 @@
     sessionEl.textContent = "session: —";
     logEl.innerHTML = "";
     traceEl.textContent = "// send a message or run Demo";
-    line("system", "New session ready when you are, Boss.", "system");
+    line("system", "New session ready when you are, Speaker.", "system");
   }
 
   function registerServiceWorker() {
     if (!("serviceWorker" in navigator)) return;
-    navigator.serviceWorker.register("/ui/sw.js").catch(() => {
-      /* offline shell is optional */
-    });
+    navigator.serviceWorker.register("/ui/sw.js").catch(() => {});
   }
 
   window.addEventListener("beforeinstallprompt", (event) => {
@@ -427,18 +576,21 @@
 
   async function installApp() {
     if (!state.deferredInstall) {
-      line(
-        "system",
-        "Install via browser menu: Add to Home Screen (phone) or Install app (desktop).",
-        "system"
-      );
+      await openModal({
+        title: "Install Atticus",
+        copy:
+          "Use your browser menu: Add to Home Screen (phone) or Install app (desktop).\n\n" +
+          "For a Windows .exe downloadable app, see docs/DOWNLOADABLE_APP.md and scripts/build_windows_app.ps1.",
+        okLabel: "Understood",
+        fields: [],
+      });
       return;
     }
     state.deferredInstall.prompt();
     try {
       await state.deferredInstall.userChoice;
     } catch {
-      /* user dismissed */
+      /* dismissed */
     }
     state.deferredInstall = null;
     if (installBtn) installBtn.hidden = true;
@@ -446,7 +598,10 @@
 
   sendBtn.addEventListener("click", sendMessage);
   newBtn.addEventListener("click", newSession);
-  citeBtn.addEventListener("click", refreshCitations);
+  citeBtn.addEventListener("click", () => {
+    refreshCitations();
+    line("system", "Citations refreshed.", "system");
+  });
   approvalAuthBtn.addEventListener("click", authenticateApprovals);
   traceBtn.addEventListener("click", () => refreshTrace());
   settingsBtn.addEventListener("click", editSettings);
@@ -459,10 +614,10 @@
     }
   });
 
-  line("system", "Atticus terminal online.", "system");
+  line("system", "The Listener is online.", "system");
   line(
     "system",
-    "Chat, approvals, settings, traces, and demo — local only. Phone: python -m atticus.api_server --lan on a trusted network, then Install app / Add to Home Screen.",
+    "Speak when ready. Settings, Auth, Trace, Citations, and Demo use in-page panels (no browser prompts).",
     "system"
   );
   if (state.conversationId) {

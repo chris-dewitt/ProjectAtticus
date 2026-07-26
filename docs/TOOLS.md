@@ -2,7 +2,7 @@
 
 ## Tool principle
 
-Atticus may eventually act on Boss's laptop, but all action must be permissioned.
+Atticus may eventually act on The Speaker's laptop, but all action must be permissioned.
 
 Desired tools:
 
@@ -92,7 +92,7 @@ All tools go through a permission gate. Tools should not ask for approval themse
 ### File read to cloud provider
 
 ```text
-Boss, I need your say-so before I send file content outside the laptop.
+The Speaker, I need your say-so before I send file content outside the laptop.
 
 Provider: OpenAI
 File: C:\Users\DELL\Documents\GitHub\ProjectAtticus\docs\notes.pdf
@@ -105,7 +105,7 @@ Approve? [y/N]
 ### Shell command
 
 ```text
-Boss, Atticus would like to run this command:
+The Speaker, Atticus would like to run this command:
 
 Command: pytest
 Working directory: C:\Users\DELL\Documents\GitHub\ProjectAtticus
@@ -118,7 +118,7 @@ Approve? [y/N]
 ### File edit
 
 ```text
-Boss, Atticus would like to edit:
+The Speaker, Atticus would like to edit:
 C:\Users\DELL\Documents\GitHub\ProjectAtticus\atticus\core\config.py
 
 Summary: add environment variable loading for OPENAI_API_KEY.

@@ -8,7 +8,7 @@ from atticus.runs.store import RunStore
 import pytest
 
 
-def _orch(tmp_path: Path, reply: str = "Of course, Boss.") -> tuple[RunStore, BoundedRunOrchestrator]:
+def _orch(tmp_path: Path, reply: str = "Of course, Speaker.") -> tuple[RunStore, BoundedRunOrchestrator]:
     store = RunStore(tmp_path / "runs.sqlite3")
     orch = BoundedRunOrchestrator(
         store,
@@ -31,7 +31,7 @@ def test_execute_succeeds(tmp_path: Path) -> None:
     )
     result = orch.execute(run.id)
     assert result.status.value == "succeeded"
-    assert result.output_text == "Of course, Boss."
+    assert result.output_text == "Of course, Speaker."
     assert any(c.name == "finalize" for c in result.checkpoints)
     assert store.list_messages(conv.id)[-1].role == "assistant"
     store.close()

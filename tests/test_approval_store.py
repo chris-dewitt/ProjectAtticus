@@ -39,7 +39,7 @@ def test_approval_lifecycle_and_audit(tmp_path: Path) -> None:
     approved = service.store.decide(
         approval.id,
         approve=True,
-        actor="boss",
+        actor="speaker",
         action_digest=approval.action_digest,
         confirmation=f"APPROVE {approval.confirmation_hint}",
         rationale="Reviewed exact output digest.",
@@ -78,7 +78,7 @@ def test_digest_and_exact_confirmation_required(tmp_path: Path) -> None:
         service.store.decide(
             approval.id,
             approve=True,
-            actor="boss",
+            actor="speaker",
             action_digest="0" * 64,
             confirmation=f"APPROVE {approval.confirmation_hint}",
         )
@@ -86,7 +86,7 @@ def test_digest_and_exact_confirmation_required(tmp_path: Path) -> None:
         service.store.decide(
             approval.id,
             approve=True,
-            actor="boss",
+            actor="speaker",
             action_digest=approval.action_digest,
             confirmation="yes",
         )
@@ -107,7 +107,7 @@ def test_terminal_approval_cannot_be_replayed(tmp_path: Path) -> None:
     service.store.decide(
         approval.id,
         approve=False,
-        actor="boss",
+        actor="speaker",
         action_digest=approval.action_digest,
         confirmation=f"DENY {approval.confirmation_hint}",
     )
@@ -115,7 +115,7 @@ def test_terminal_approval_cannot_be_replayed(tmp_path: Path) -> None:
         service.store.decide(
             approval.id,
             approve=True,
-            actor="boss",
+            actor="speaker",
             action_digest=approval.action_digest,
             confirmation=f"APPROVE {approval.confirmation_hint}",
         )

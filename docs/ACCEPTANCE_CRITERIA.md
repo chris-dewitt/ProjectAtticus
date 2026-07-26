@@ -6,7 +6,7 @@ The Phase 1 CLI build is acceptable when all of the following are true:
 
 - `python -m atticus` launches the CLI.
 - Atticus uses the canonical persona prompt.
-- Atticus addresses the user as Boss naturally.
+- Atticus addresses the user as The Speaker naturally.
 - OpenAI is the default provider.
 - Claude/Gemini providers exist as stubs or optional implementations.
 - Missing API keys produce helpful errors.
@@ -35,7 +35,7 @@ Atticus should sound like Atticus, not like a generic assistant.
 Good:
 
 ```text
-Of course, Boss. I’ve got the shape of it. The cleanest next move is to wire the provider layer first, then put memory behind a small SQLite store.
+Of course, Speaker. I’ve got the shape of it. The cleanest next move is to wire the provider layer first, then put memory behind a small SQLite store.
 ```
 
 Bad:

@@ -132,5 +132,5 @@ Model API usage can cost money. The app should support monthly budget guidance i
 If no OpenAI key is found, Atticus should say something like:
 
 ```text
-I ran into a snag, Boss. OPENAI_API_KEY is not set, so I cannot call OpenAI yet. Set the key as an environment variable, reopen PowerShell, and try again.
+I ran into a snag, Speaker. OPENAI_API_KEY is not set, so I cannot call OpenAI yet. Set the key as an environment variable, reopen PowerShell, and try again.
 ```

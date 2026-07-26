@@ -64,7 +64,7 @@ def test_voice_speak_invokes_pyttsx3(monkeypatch: pytest.MonkeyPatch) -> None:
     console = Console(file=buf, width=80, force_terminal=True)
     voice = VoiceConfig(spoken_responses=True, muted=False, tts_engine="pyttsx3")
     out = VoiceOutput(voice, console)
-    out.speak("**Hi** Boss")
+    out.speak("**Hi** The Speaker")
     assert len(called) == 1
     assert "Hi" in called[0]
     assert "**" not in called[0]

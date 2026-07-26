@@ -6,7 +6,7 @@ These do not block the shipped CLI.
 
 1. Which exact OpenAI model should be the production default once costs and latency are tested?
 2. Should Atticus prefer Windows Credential Manager through `keyring` for OpenAI as well as GitHub tokens? (`get_credential` exists; OpenAI provider still reads env directly.)
-3. Which TTS voice sounds most like Atticus on Boss's laptop?
+3. Which TTS voice sounds most like Atticus on The Speaker's laptop?
 4. Which local STT engine performs best on the older Dell Inspiron?
 5. Should the desktop UI be PySide6, Tauri, Textual expansion, or local browser UI?
 6. How should Gmail/Calendar OAuth scopes be minimized?
@@ -15,7 +15,7 @@ These do not block the shipped CLI.
 
 ## Track B (portfolio platform)
 
-These do not authorize starting M0–M5 until Boss asks.
+These do not authorize starting M0–M5 until The Speaker asks.
 
 1. When should FastAPI (or another typed API) be introduced alongside the CLI — M0 skeleton, or only when the signature demo needs it?
 2. When is Postgres justified over continuing with SQLite for local-first Windows use?

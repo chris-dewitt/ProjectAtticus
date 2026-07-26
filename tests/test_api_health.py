@@ -54,9 +54,9 @@ def test_ready_alias(api_client: TestClient) -> None:
 
 
 def test_preserves_incoming_correlation_id(api_client: TestClient) -> None:
-    response = api_client.get("/health/live", headers={"X-Correlation-ID": "boss-42"})
-    assert response.headers["X-Correlation-ID"] == "boss-42"
-    assert response.json()["correlation_id"] == "boss-42"
+    response = api_client.get("/health/live", headers={"X-Correlation-ID": "speaker-42"})
+    assert response.headers["X-Correlation-ID"] == "speaker-42"
+    assert response.json()["correlation_id"] == "speaker-42"
 
 
 def test_docs_disabled_by_default(api_client: TestClient) -> None:

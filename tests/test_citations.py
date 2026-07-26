@@ -47,7 +47,7 @@ def test_legacy_citation_normalizes(tmp_path: Path) -> None:
 
 def test_local_file_and_code_search_citations(tmp_path: Path) -> None:
     source = tmp_path / "notes.txt"
-    source.write_text("Boss likes green terminals.\n", encoding="utf-8")
+    source.write_text("The Speaker likes green terminals.\n", encoding="utf-8")
     file_rec = cite_svc.from_local_file(path=source, text=source.read_text(), max_bytes=10_000)
     saved = cite_svc.save_record(file_rec, tmp_path / "citations")
     assert saved.kind == "local_file"
@@ -55,8 +55,8 @@ def test_local_file_and_code_search_citations(tmp_path: Path) -> None:
 
     code_rec = cite_svc.from_code_search(
         path=source,
-        line="Boss likes green terminals.",
-        pattern="Boss",
+        line="The Speaker likes green terminals.",
+        pattern="The Speaker",
         line_no=1,
     )
     cite_svc.save_record(code_rec, tmp_path / "citations")

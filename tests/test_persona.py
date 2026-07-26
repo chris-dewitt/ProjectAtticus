@@ -11,7 +11,7 @@ from atticus.core.persona import build_system_prompt
 def test_build_system_prompt_contains_atticus(repo_root: Path) -> None:
     text = build_system_prompt(repo_root, "default")
     assert "Atticus" in text
-    assert "Boss" in text
+    assert "The Speaker" in text
 
 
 def test_unknown_mode(repo_root: Path) -> None:
