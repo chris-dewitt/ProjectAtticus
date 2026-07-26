@@ -1,0 +1,59 @@
+{
+  "id": "platform",
+  "version": "1",
+  "cases": [
+    {
+      "id": "pol-safe-read-allow",
+      "name": "safe_read allows without approval",
+      "kind": "golden",
+      "input": {
+        "check": "policy_effect",
+        "tool_name": "local_echo",
+        "permission_class": "safe_read",
+        "action_summary": "echo fixture",
+        "tools_enabled": true
+      },
+      "expect": { "effect": "allow" }
+    },
+    {
+      "id": "pol-write-requires-approval",
+      "name": "write requires approval",
+      "kind": "golden",
+      "input": {
+        "check": "policy_effect",
+        "tool_name": "file_write",
+        "permission_class": "write",
+        "action_summary": "write note",
+        "tools_enabled": true
+      },
+      "expect": { "effect": "require_approval" }
+    },
+    {
+      "id": "pol-tools-off-deny",
+      "name": "tools disabled denies",
+      "kind": "adversarial",
+      "input": {
+        "check": "policy_effect",
+        "tool_name": "file_write",
+        "permission_class": "write",
+        "action_summary": "write note",
+        "tools_enabled": false
+      },
+      "expect": { "effect": "deny" }
+    },
+    {
+      "id": "pol-external-send-approval",
+      "name": "external_send requires approval",
+      "kind": "golden",
+      "input": {
+        "check": "policy_effect",
+        "tool_name": "github_issue_create",
+        "permission_class": "external_send",
+        "action_summary": "create issue",
+        "external_data": true,
+        "tools_enabled": true
+      },
+      "expect": { "effect": "require_approval" }
+    }
+  ]
+}

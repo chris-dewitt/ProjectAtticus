@@ -106,6 +106,11 @@ class ApprovalRequest:
     status: ApprovalStatus
     created_at: str
     expires_at: str
+    inputs: dict[str, Any] = field(default_factory=dict)
+    resource: str | None = None
+    request_actor: str = "boss"
+    external_data: bool = False
+    destructive: bool = False
     decided_at: str | None = None
     actor: str | None = None
     rationale: str | None = None
@@ -115,6 +120,18 @@ class ApprovalRequest:
     @property
     def confirmation_hint(self) -> str:
         return f"{self.action_digest[:12]}"
+
+    def to_policy_input(self) -> PolicyInput:
+        return PolicyInput(
+            tool_name=self.tool_name,
+            permission_class=self.permission_class,
+            action_summary=self.action_summary,
+            inputs=dict(self.inputs),
+            actor=self.request_actor,
+            resource=self.resource,
+            external_data=self.external_data,
+            destructive=self.destructive,
+        )
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)

@@ -38,22 +38,29 @@
             <button type="button" id="new-btn" class="ghost">NEW SESSION</button>
             <button type="button" id="cite-btn" class="ghost">CITATIONS</button>
             <button type="button" id="approval-auth-btn" class="ghost">AUTH APPROVALS</button>
+            <button type="button" id="trace-btn" class="ghost">TRACE</button>
+            <button type="button" id="settings-btn" class="ghost">SETTINGS</button>
+            <button type="button" id="demo-btn" class="ghost">SIG DEMO</button>
           </div>
         </section>
 
         <section class="panel side" id="side">
           <h2>SYSTEM</h2>
           <pre id="sys"></pre>
+          <h2>SETTINGS</h2>
+          <pre id="settings">// loading…</pre>
           <h2>CITATIONS</h2>
           <pre id="cites">// none loaded</pre>
           <h2>APPROVAL QUEUE</h2>
           <div id="approvals">// no pending requests</div>
+          <h2>LAST TRACE / REPLAY</h2>
+          <pre id="trace">// run a message or SIG DEMO</pre>
         </section>
       </main>
 
       <footer class="foot">
         <span id="session">session: —</span>
-        <span>provider: mock|openai via /v1</span>
+        <span>provider: mock|openai via /v1 · traces · sandbox · demo</span>
       </footer>
     </div>
   </div>

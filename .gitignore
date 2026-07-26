@@ -43,6 +43,11 @@ transcripts/
 *.mp3
 *.m4a
 
+# Node / Next.js (web/)
+web/node_modules/
+web/.next/
+web/out/
+
 # OS/editor
 .DS_Store
 Thumbs.db

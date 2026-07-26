@@ -1,4 +1,4 @@
-"""Bounded run orchestrator (Track B M1).
+"""Bounded run orchestrator (Track B M1 + M4 trace spans).
 
 Framework-independent state machine with persisted checkpoints. Provider calls
 go through the injected ``LLMProvider`` protocol — tests use ``MockProvider``.
@@ -16,6 +16,8 @@ from atticus.core.telemetry import get_correlation_id, get_telemetry
 from atticus.providers.base import LLMProvider
 from atticus.runs.models import CheckpointRecord, RunRecord, RunStatus
 from atticus.runs.store import RunStore
+from atticus.traces.models import SpanKind
+from atticus.traces.store import TraceStore
 
 
 def _utc_now() -> str:
@@ -38,12 +40,14 @@ class BoundedRunOrchestrator:
         repo_root: Path | None = None,
         max_messages: int = 32,
         include_system_prompt: bool = True,
+        trace_store: TraceStore | None = None,
     ) -> None:
         self._store = store
         self._provider_factory = provider_factory
         self._repo_root = repo_root
         self._max_messages = max_messages
         self._include_system_prompt = include_system_prompt
+        self._trace_store = trace_store
 
     def execute(self, run_id: str) -> RunRecord:
         run = self._store.get_run(run_id)
@@ -59,6 +63,17 @@ class BoundedRunOrchestrator:
         if run.cancel_requested:
             return self._mark_cancelled(run, reason="cancel_requested_before_start")
 
+        root_span_id = None
+        if self._trace_store is not None:
+            root = self._trace_store.start_span(
+                run_id=run.id,
+                name="bounded_run",
+                kind=SpanKind.RUN,
+                attributes={"provider": run.provider, "mode": run.mode},
+                correlation_id=run.correlation_id or get_correlation_id(),
+            )
+            root_span_id = root.id
+
         run.status = RunStatus.RUNNING
         self._checkpoint(run, "validate_request", {"message_count": len(run.input_messages)})
         self._store.save_run(run)
@@ -70,7 +85,11 @@ class BoundedRunOrchestrator:
 
             run = self._store.get_run(run_id)
             if run.cancel_requested:
-                return self._mark_cancelled(run, reason="cancel_requested_before_provider")
+                return self._mark_cancelled(
+                    run,
+                    reason="cancel_requested_before_provider",
+                    root_span_id=root_span_id,
+                )
 
             provider = self._provider_factory(run.provider)
             self._checkpoint(
@@ -80,6 +99,17 @@ class BoundedRunOrchestrator:
             )
             self._store.save_run(run)
 
+            provider_span_id = None
+            if self._trace_store is not None:
+                provider_span = self._trace_store.start_span(
+                    run_id=run.id,
+                    name="provider.generate",
+                    kind=SpanKind.PROVIDER,
+                    parent_span_id=root_span_id,
+                    attributes={"provider": provider.name},
+                )
+                provider_span_id = provider_span.id
+
             with get_telemetry().span(
                 "run.provider_generate",
                 run_id=run.id,
@@ -87,10 +117,19 @@ class BoundedRunOrchestrator:
             ):
                 output = provider.generate(messages, mode=run.mode)
 
+            if self._trace_store is not None and provider_span_id:
+                self._trace_store.end_span(
+                    provider_span_id,
+                    attributes={"output_chars": len(output)},
+                )
+
             run = self._store.get_run(run_id)
             if run.cancel_requested:
-                # Provider already returned; still honor cooperative cancel if flagged mid-flight.
-                return self._mark_cancelled(run, reason="cancel_requested_after_provider")
+                return self._mark_cancelled(
+                    run,
+                    reason="cancel_requested_after_provider",
+                    root_span_id=root_span_id,
+                )
 
             run.output_text = output
             run.status = RunStatus.SUCCEEDED
@@ -102,6 +141,8 @@ class BoundedRunOrchestrator:
                     role="assistant",
                     content=output,
                 )
+            if self._trace_store is not None and root_span_id:
+                self._trace_store.end_span(root_span_id, status="ok")
             get_telemetry().emit(
                 "run.succeeded",
                 run_id=run.id,
@@ -110,12 +151,18 @@ class BoundedRunOrchestrator:
             )
             return run
         except AtticusError as exc:
-            return self._mark_failed(run_id, code=exc.code, message=exc.message)
+            return self._mark_failed(
+                run_id,
+                code=exc.code,
+                message=exc.message,
+                root_span_id=root_span_id,
+            )
         except Exception as exc:  # noqa: BLE001 — normalize unexpected provider failures
             return self._mark_failed(
                 run_id,
                 code="provider_error",
                 message=f"Provider failed: {exc.__class__.__name__}",
+                root_span_id=root_span_id,
             )
 
     def cancel(self, run_id: str) -> RunRecord:
@@ -177,22 +224,39 @@ class BoundedRunOrchestrator:
     def _checkpoint(self, run: RunRecord, name: str, detail: dict[str, Any]) -> None:
         run.checkpoints.append(CheckpointRecord(name=name, at=_utc_now(), detail=detail))
 
-    def _mark_cancelled(self, run: RunRecord, *, reason: str) -> RunRecord:
+    def _mark_cancelled(
+        self,
+        run: RunRecord,
+        *,
+        reason: str,
+        root_span_id: str | None = None,
+    ) -> RunRecord:
         run.status = RunStatus.CANCELLED
         run.cancel_requested = True
         run.error_code = "cancelled"
         run.error_message = reason
         self._checkpoint(run, "cancelled", {"reason": reason})
         self._store.save_run(run)
+        if self._trace_store is not None and root_span_id:
+            self._trace_store.end_span(root_span_id, status="cancelled", attributes={"reason": reason})
         get_telemetry().emit("run.cancelled", run_id=run.id, reason=reason)
         return run
 
-    def _mark_failed(self, run_id: str, *, code: str, message: str) -> RunRecord:
+    def _mark_failed(
+        self,
+        run_id: str,
+        *,
+        code: str,
+        message: str,
+        root_span_id: str | None = None,
+    ) -> RunRecord:
         run = self._store.get_run(run_id)
         run.status = RunStatus.FAILED
         run.error_code = code
         run.error_message = message
         self._checkpoint(run, "failed", {"code": code})
         self._store.save_run(run)
+        if self._trace_store is not None and root_span_id:
+            self._trace_store.end_span(root_span_id, status="error", attributes={"code": code})
         get_telemetry().emit("run.failed", run_id=run.id, code=code)
         return run

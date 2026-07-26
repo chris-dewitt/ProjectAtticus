@@ -5,7 +5,10 @@
 - **Current implementation (Track A):** modular local CLI assistant under `atticus/` — Rich interface, orchestration helpers, OpenAI provider, SQLite memory, permission-gated tools, optional voice/desktop. This section below describes that shape.
 - **Target platform (Track B):** bounded orchestrator, policy engine, typed API, traces/replay, and evaluation hooks described in root [`SPEC.md`](../SPEC.md). See [`PORTFOLIO_ALIGNMENT.md`](PORTFOLIO_ALIGNMENT.md) for what is shipped vs planned.
 
-Do not assume Postgres, Next.js, or a `src/` layout exist in the tree today. An optional FastAPI API exists under `atticus/api/` with health, bounded runs, citations, policy/approvals, and a retro `/ui` terminal (`atticus/runs/`, `atticus/policy/`, ADR-010–013) — not a full tool-dispatch/traces platform.
+Implementation stays under `atticus/` (not `src/`). Local M0–M5 slices ship via
+FastAPI `/v1`, retro `/ui`, Next.js `web/`, Compose, and Terraform sketches
+(ADR-010–018). SQLite remains the default store; Postgres/Redis are optional
+Compose services.
 
 ## Architectural thesis
 
@@ -21,23 +24,27 @@ ProjectAtticus/
     __init__.py
     __main__.py
     app.py
-    api/                 # Track B: health + /v1 runs (optional .[api])
+    api/                 # Track B HTTP + retro /ui (optional .[api])
       app.py
       health.py
       runs.py
-      schemas.py
-      v1_schemas.py
-      errors.py
+      citations.py
+      policy.py
+      traces.py
+      sandbox.py
+      memory_api.py
+      settings.py
+      demo.py
+      evals_api.py
+      auth.py
+      static/retro/
     api_server.py
-    runs/                # Track B domain: store + bounded orchestrator
-      models.py
-      store.py
-      orchestrator.py
-    policy/              # Track B M3: decisions, approvals, audit
-      models.py
-      engine.py
-      service.py
-      store.py
+    runs/                # bounded orchestrator + checkpoints
+    policy/              # decisions, approvals, audit, dispatch
+    traces/              # span store + replay
+    sandbox/             # bounded local execution
+    evals/               # harness (suites live in /evals)
+    demo/                # signature demo workflow
     core/
       config.py
       persona.py

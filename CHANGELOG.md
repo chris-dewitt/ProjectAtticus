@@ -32,6 +32,22 @@ Track A packaging milestone (personal assistant), not Track B M0–M5 completion
 
 ## Unreleased
 
+### Epic: finish Track A GUI + Track B M0–M5 platform bar
+
+- M4: durable traces, replay reports, Python sandbox, memory/settings APIs
+- M5: eval suites, provider fallback routing, signature demo, deploy docs
+- Shared standard: Docker Compose, Next.js `web/`, OTel-shaped exporter,
+  API token auth, rate limits, Terraform sketches, root contract docs
+- Retro `/ui` chat + approvals + settings + traces + SIG DEMO
+- ADR-014–018; CI eval/demo smoke + container builds
+
+### Track B M3 idempotent dispatch
+
+- `ToolGateway` executes only approved actions
+- `POST /v1/approvals/{id}/execute` with required `Idempotency-Key`
+- SQLite idempotency ledger; handlers for `local_echo` and `file_write`
+- Retro UI EXECUTE for approved requests; ADR-014
+
 ### Track B M3 policy / approvals
 
 - Deterministic `atticus/policy/` engine (allow/deny/require approval)

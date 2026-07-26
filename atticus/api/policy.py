@@ -12,6 +12,7 @@ from atticus.core.errors import DependencyUnavailable
 from atticus.core.permissions import PermissionClass
 from atticus.core.secrets import get_credential
 from atticus.core.telemetry import get_telemetry
+from atticus.policy.dispatch import ToolGateway
 from atticus.policy.models import ApprovalStatus, PolicyInput
 from atticus.policy.service import PolicyService
 from atticus.policy.store import ApprovalAuthenticationError
@@ -40,6 +41,10 @@ class ExecutionResultRequest(BaseModel):
     succeeded: bool
     actor: str = Field(min_length=1, max_length=120)
     result_summary: str = Field(min_length=1, max_length=2000)
+
+
+class ExecuteApprovalRequest(BaseModel):
+    actor: str = Field(default="atticus", min_length=1, max_length=120)
 
 
 def build_policy_router() -> APIRouter:
@@ -130,6 +135,33 @@ def build_policy_router() -> APIRouter:
             actor=body.actor,
         )
         return approval.to_dict()
+
+    @router.post("/approvals/{approval_id}/execute")
+    async def execute_approval(
+        request: Request,
+        approval_id: str,
+        body: ExecuteApprovalRequest,
+        approval_token: str | None = Header(default=None, alias="X-Atticus-Approval-Token"),
+        idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+    ) -> dict[str, Any]:
+        _require_approval_token(request, approval_token)
+        if not idempotency_key:
+            from atticus.policy.dispatch import DispatchDenied
+
+            raise DispatchDenied("Idempotency-Key header is required.")
+        gateway: ToolGateway = request.app.state.tool_gateway
+        result = gateway.execute(
+            approval_id,
+            idempotency_key=idempotency_key,
+            actor=body.actor,
+        )
+        get_telemetry().emit(
+            "approval.executed",
+            approval_id=result.approval_id,
+            tool_name=result.tool_name,
+            replayed=result.replayed,
+        )
+        return result.to_dict()
 
     @router.get("/audit/policy")
     async def list_policy_audit(

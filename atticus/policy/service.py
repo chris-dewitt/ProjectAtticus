@@ -47,6 +47,7 @@ class PolicyService:
         if create_approval and decision.effect == PolicyEffect.REQUIRE_APPROVAL:
             approval = self.store.create_approval(
                 decision,
+                intent=intent,
                 ttl_seconds=self.approval_ttl_seconds,
             )
         get_telemetry().emit(

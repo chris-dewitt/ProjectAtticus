@@ -175,5 +175,94 @@ Implications:
 2. The retro UI displays pending requests and prompts for exact phrase + token;
    it does not store the token.
 3. Policy/audit SQLite defaults to `data/atticus_approvals.sqlite3`.
-4. Tool execution is not yet automatically dispatched after approval; M3
-   remainder is coupling approved requests to an idempotent tool gateway.
+4. Tool execution after approval is handled by ADR-014 (idempotent gateway).
+
+## ADR-014 — Idempotent approved-tool dispatch gateway
+
+Decision: add `atticus/policy/dispatch.ToolGateway` and
+`POST /v1/approvals/{id}/execute` so only previously approved actions can run,
+and repeated calls with the same `Idempotency-Key` return the original result.
+
+Includes:
+
+- Persist exact approved intent (`inputs`, `resource`, flags) on approval rows
+- Recompute/verify action digest before execution
+- SQLite `idempotency_records` ledger keyed by `Idempotency-Key`
+- Initial handlers: `local_echo` (safe fixture) and `file_write` (approved paths)
+- Terminal UI EXECUTE for approved requests with prompted idempotency key
+
+Reason: SPEC requires approved mutating tool calls to be idempotent and forbids
+execution without an allow/approval decision. This closes the M3 execution
+bridge without inventing a parallel tool system.
+
+Implications:
+
+1. Execute requires approval token + `Idempotency-Key`.
+2. Only registered handlers are dispatchable; unknown tools return
+   `tool_not_dispatchable`.
+3. Replay never re-runs side effects for the same key.
+4. Broader tool coverage (gmail/calendar/git) remains incremental.
+5. Next major Track B step is M4 traces/replay.
+
+## ADR-015 — SQLite default with optional Compose Postgres/Redis
+
+Decision: keep SQLite as the default durable store for runs, approvals, traces,
+and memory on Track A/B local installs. Provide `docker-compose.yml` with
+Postgres 16 + Redis 7 for shared-standard parity and future store backends.
+Do not silently migrate production data paths to Postgres in this epic.
+
+Reason: Boss's Windows laptop and privacy-first local use remain primary.
+Portfolio reviewers can still bring up the standard dependency stack via Compose.
+
+Implications:
+
+1. API readiness continues to check SQLite paths unless a future ADR flips the default.
+2. Postgres/Redis in Compose are available but unused by the default app wiring.
+3. A later ADR may introduce repository interfaces + migrations for Postgres.
+
+## ADR-016 — Dual UI: retro `/ui` + Next.js `web/`
+
+Decision: keep the phosphor FastAPI `/ui` as the primary local operator terminal
+(Track A GUI chat/approvals/settings/traces/demo). Add a minimal Next.js app
+under `web/` for SHARED_ENGINEERING_STANDARD production-UI parity and Compose.
+
+Reason: Track A character UX already lives in the retro terminal; a greenfield
+Next rewrite would delay SPEC acceptance. Both surfaces call the same `/v1` API.
+
+Implications:
+
+1. Retro UI remains the fastest three-minute demo path (`atticus-api` → `/ui`).
+2. Next.js is built in CI container job; local `npm run dev` is optional.
+3. CORS allows `localhost:3000` → API for the web console.
+
+## ADR-017 — M4 traces, replay, and sandbox
+
+Decision: add `atticus/traces/` (SQLite spans), `GET /v1/traces/{run_id}`,
+`GET /v1/runs/{run_id}/replay`, and `atticus/sandbox/` with
+`POST /v1/sandbox/execute` (Python AST-gated child process; shell opt-in).
+
+Reason: SPEC M4 requires inspectable plans/tools/approvals/artifacts plus
+sandboxed execution. Spans attach to bounded runs and the signature demo.
+
+Implications:
+
+1. Trace DB defaults to `data/atticus_traces.sqlite3`.
+2. Sandbox denies network-capable imports; shell metacharacters blocked.
+3. Replay is reconstructive (checkpoints + spans), not a re-execution engine.
+
+## ADR-018 — M5 evals, routing fallback, signature demo, deploy docs
+
+Decision: ship versioned `evals/` suites, `scripts/run_evals.py`,
+`/v1/evals/run`, automatic provider fallback with recorded decisions,
+`atticus/demo/signature.py` + `/v1/demo/signature`, OTel-shaped file/stderr
+exporter, API token + rate-limit middleware, Azure Terraform sketches, and
+`docs/DEPLOYMENT.md`.
+
+Reason: SPEC M5 and the shared-standard definition of done require measurable
+quality, routing transparency, a signature demo, and deploy documentation.
+
+Implications:
+
+1. Signature demo uses synthetic fixtures and always stops for approval.
+2. CI runs pytest + eval smoke + signature demo smoke + container builds.
+3. Full managed OTLP collector / live Azure apply remain operator follow-ups.

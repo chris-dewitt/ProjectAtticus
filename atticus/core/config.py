@@ -49,6 +49,11 @@ class ProvidersRoutingConfig(BaseModel):
     automatic: bool = True
     default_provider: str = "openai"
     allow_manual_override: bool = True
+    fallback_order: list[str] = Field(
+        default_factory=lambda: ["openai", "anthropic", "gemini"]
+    )
+    """Ordered fallback providers when automatic routing is enabled."""
+    record_routing_decisions: bool = True
 
 
 class ProvidersConfig(BaseModel):
@@ -208,8 +213,13 @@ class ApiConfig(BaseModel):
     ui_enabled: bool = True
     """Serve the local retro terminal UI at /ui (still bound to api.host)."""
     runs_sqlite_path: str = "data/atticus_runs.sqlite3"
+    traces_sqlite_path: str = "data/atticus_traces.sqlite3"
     max_messages_per_run: int = 32
     include_system_prompt: bool = True
+    api_token_env: str = "ATTICUS_API_TOKEN"
+    """When set and non-empty, /v1 requires X-Atticus-Api-Token."""
+    rate_limit_per_minute: int = 180
+    """0 disables rate limiting."""
 
 
 class PolicyConfig(BaseModel):
@@ -221,8 +231,19 @@ class PolicyConfig(BaseModel):
     approval_token_env: str = "ATTICUS_APPROVAL_TOKEN"
 
 
+class SandboxConfig(BaseModel):
+    """Track B M4 sandboxed execution bounds."""
+
+    model_config = ConfigDict(extra="ignore")
+    enabled: bool = True
+    timeout_seconds: float = 5.0
+    max_output_bytes: int = 32_000
+    allow_shell: bool = False
+    work_dir: str = "data/sandbox"
+
+
 class TelemetryConfig(BaseModel):
-    """Lightweight telemetry hooks; OTel exporter is deferred."""
+    """Telemetry hooks with optional OTLP/JSON file exporter."""
 
     model_config = ConfigDict(extra="ignore")
     enabled: bool = True
@@ -230,6 +251,9 @@ class TelemetryConfig(BaseModel):
     environment: str = "local"
     log_level: str = "INFO"
     emit_stderr: bool = False
+    otel_exporter: str = "none"
+    """none | stderr | file — file writes JSON lines under otel_file_path."""
+    otel_file_path: str = "data/telemetry/otel.jsonl"
     redact_keys: list[str] = Field(
         default_factory=lambda: [
             "api_key",
@@ -254,6 +278,7 @@ class AppConfig(BaseModel):
     tools: ToolsConfig = Field(default_factory=ToolsConfig)
     api: ApiConfig = Field(default_factory=ApiConfig)
     policy: PolicyConfig = Field(default_factory=PolicyConfig)
+    sandbox: SandboxConfig = Field(default_factory=SandboxConfig)
     telemetry: TelemetryConfig = Field(default_factory=TelemetryConfig)
 
 

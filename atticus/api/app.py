@@ -1,4 +1,4 @@
-"""FastAPI application factory for Track B health + bounded run APIs."""
+"""FastAPI application factory for Track A/B local platform API."""
 
 from __future__ import annotations
 
@@ -7,15 +7,23 @@ from pathlib import Path
 from typing import Any, Callable
 
 from fastapi import FastAPI, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
+from atticus.api.auth import ApiAuthMiddleware, RateLimitMiddleware
 from atticus.api.citations import build_citations_router
+from atticus.api.demo import build_demo_router
 from atticus.api.errors import atticus_error_handler, unhandled_error_handler
+from atticus.api.evals_api import build_evals_router
 from atticus.api.health import live_response, load_ready_response
+from atticus.api.memory_api import build_memory_router
 from atticus.api.policy import build_policy_router
 from atticus.api.runs import build_runs_router
+from atticus.api.sandbox import build_sandbox_router
 from atticus.api.schemas import ReadyResponse
+from atticus.api.settings import build_settings_router
+from atticus.api.traces import build_traces_router
 from atticus.core.config import AppConfig, load_app_config, resolve_repo_root
 from atticus.core.errors import AtticusError, ProviderError
 from atticus.core.router import ProviderRouter
@@ -25,13 +33,17 @@ from atticus.core.telemetry import (
     get_telemetry,
     set_telemetry,
 )
-from atticus.providers.base import LLMProvider
-from atticus.providers.mock_provider import MockProvider
+from atticus.memory.store import MemoryStore
+from atticus.policy.dispatch import ToolGateway
 from atticus.policy.engine import PolicyEngine
 from atticus.policy.service import PolicyService
 from atticus.policy.store import ApprovalStore
+from atticus.providers.base import LLMProvider
+from atticus.providers.mock_provider import MockProvider
 from atticus.runs.orchestrator import BoundedRunOrchestrator
 from atticus.runs.store import RunStore
+from atticus.sandbox.runner import SandboxRunner
+from atticus.traces.store import TraceStore
 
 
 def create_app(
@@ -41,10 +53,11 @@ def create_app(
     telemetry: Telemetry | None = None,
     run_store: RunStore | None = None,
     approval_store: ApprovalStore | None = None,
+    trace_store: TraceStore | None = None,
     provider_factory: Callable[[str], LLMProvider] | None = None,
     default_provider: str | None = None,
 ) -> FastAPI:
-    """Build the Track B API app (health + M1 conversations/runs)."""
+    """Build the local API app (health, runs, citations, policy, traces, demo)."""
     if config is None:
         config, resolved_path = load_app_config(config_path=config_path)
     else:
@@ -61,6 +74,8 @@ def create_app(
                 service_name=service_name,
                 environment=config.telemetry.environment,
                 emit_stderr=config.telemetry.emit_stderr,
+                otel_exporter=config.telemetry.otel_exporter,
+                otel_file_path=config.telemetry.otel_file_path,
                 redact_keys=set(config.telemetry.redact_keys),
             )
         )
@@ -69,10 +84,11 @@ def create_app(
     redoc_url = "/redoc" if config.api.docs_enabled else None
     app = FastAPI(
         title="ProjectAtticus API",
-        version="0.4.0",
+        version="1.1.0",
         description=(
-            "Track B local API: health, bounded runs, citations, policy/approvals, "
-            "and optional retro /ui. Traces remain a later milestone."
+            "Local-first Atticus API: conversations/runs, citations, policy/approvals, "
+            "idempotent dispatch, traces/replay, sandbox, memory controls, evals, "
+            "signature demo, and retro /ui."
         ),
         docs_url=docs_url,
         redoc_url=redoc_url,
@@ -100,6 +116,19 @@ def create_app(
         approval_store,
         approval_ttl_seconds=config.policy.approval_ttl_seconds,
     )
+    app.state.tool_gateway = ToolGateway(config, approval_store)
+
+    if trace_store is None:
+        trace_store = TraceStore(Path(config.api.traces_sqlite_path).expanduser())
+    app.state.trace_store = trace_store
+
+    app.state.memory_store = MemoryStore(Path(config.memory.sqlite_path).expanduser())
+    app.state.sandbox_runner = SandboxRunner(
+        work_dir=Path(config.sandbox.work_dir).expanduser(),
+        timeout_seconds=config.sandbox.timeout_seconds,
+        max_output_bytes=config.sandbox.max_output_bytes,
+        allow_shell=config.sandbox.allow_shell,
+    )
 
     if provider_factory is None:
         router = ProviderRouter(config)
@@ -113,6 +142,8 @@ def create_app(
                     router.set_provider(key)
                 except ValueError as exc:
                     raise ProviderError(str(exc), code="invalid_provider", status_code=400) from exc
+            if config.providers.routing.automatic:
+                return router.resolve_with_fallback(key)
             return router.active_provider()
 
         provider_factory = _factory
@@ -124,6 +155,26 @@ def create_app(
         repo_root=repo_root,
         max_messages=config.api.max_messages_per_run,
         include_system_prompt=config.api.include_system_prompt,
+        trace_store=trace_store,
+    )
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[
+            "http://127.0.0.1:3000",
+            "http://localhost:3000",
+        ],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    app.add_middleware(
+        RateLimitMiddleware,
+        per_minute=config.api.rate_limit_per_minute,
+    )
+    app.add_middleware(
+        ApiAuthMiddleware,
+        token_env=config.api.api_token_env,
     )
 
     app.add_exception_handler(AtticusError, atticus_error_handler)
@@ -131,6 +182,12 @@ def create_app(
     app.include_router(build_runs_router())
     app.include_router(build_citations_router())
     app.include_router(build_policy_router())
+    app.include_router(build_traces_router())
+    app.include_router(build_sandbox_router())
+    app.include_router(build_memory_router())
+    app.include_router(build_settings_router())
+    app.include_router(build_demo_router())
+    app.include_router(build_evals_router())
 
     static_dir = Path(__file__).resolve().parent / "static" / "retro"
     if config.api.ui_enabled and static_dir.is_dir():

@@ -11,7 +11,7 @@ This repository ships a working **Track A** personal assistant today:
 - Package code lives under `atticus/` (Rich CLI, persona, OpenAI provider, SQLite memory, permissioned tools, optional voice).
 - Package version and CLI entrypoints describe that product; see `README.md` and `docs/PORTFOLIO_ALIGNMENT.md`.
 
-This `SPEC.md` defines **Track B**: the portfolio agent-platform architecture (policy engine, bounded orchestrator, API/traces/evals). Track B is **planned**, not a claim that FastAPI, Postgres, Next.js, or M0–M5 are already shipped.
+This `SPEC.md` defines **Track B**: the portfolio agent-platform architecture (policy engine, bounded orchestrator, API/traces/evals). Local M0–M5 vertical slices now ship under `atticus/` (see `docs/PORTFOLIO_ALIGNMENT.md` and ADR-010–018). That is **not** a claim of a live Azure/Postgres-default production deployment — Compose/Next/Terraform/OTel file export cover the shared-standard bar with documented deviations.
 
 When documents conflict:
 

@@ -1,6 +1,6 @@
 # Track B local API
 
-Status: M0 health + M1 bounded runs + M2 citations + M3 policy/approvals + retro `/ui` (ADR-010–013)
+Status: M0–M5 local platform API + retro `/ui` + optional Next.js `web/` (ADR-010–018)
 
 ## Install and run
 
@@ -94,7 +94,8 @@ Send `Idempotency-Key` on `POST /v1/conversations/{id}/messages` or `POST /v1/ru
 
 ## Telemetry
 
-`atticus.core.telemetry` records redacted in-process events (`api.request`, `run.succeeded`, `run.failed`, `run.cancelled`). No OpenTelemetry exporter yet.
+`atticus.core.telemetry` records redacted in-process events and can export
+OTel-shaped JSON lines (`telemetry.otel_exporter: stderr|file`).
 
 ## Privacy notes
 
@@ -120,7 +121,8 @@ Schema version: `atticus.citation.v1` (stable id, kind, source URI, sha256, evid
 | GET | `/v1/approvals` | List requests; filter `?status=pending` |
 | GET | `/v1/approvals/{id}` | Inspect exact action digest and lifecycle |
 | POST | `/v1/approvals/{id}/decision` | Approve/deny (token + exact phrase required) |
-| POST | `/v1/approvals/{id}/execution` | Record approved action result |
+| POST | `/v1/approvals/{id}/execution` | Manually record approved action result |
+| POST | `/v1/approvals/{id}/execute` | Gateway-dispatch the approved action (`Idempotency-Key` required) |
 | GET | `/v1/audit/policy` | Read policy audit (token required) |
 
 Before decisions work, create a long random local secret:
@@ -139,14 +141,45 @@ Decision calls additionally require:
   `DENY <confirmation_hint>`
 
 The terminal UI's **AUTH APPROVALS** control holds the token only in page memory,
-then displays pending requests and asks for the exact phrase when deciding. It
-never writes the token to local storage. Policy input values are included in
-the action digest but are not copied into policy/audit rows.
+then displays pending/approved requests. Decide with the exact phrase; EXECUTE
+prompts for an `Idempotency-Key`. The token is never written to local storage.
 
-## Out of scope (later milestones)
+Dispatchable tools in this slice: `local_echo`, `file_write` (approved paths).
 
-- Idempotent automatic tool dispatch after approval (M3 remainder)
-- Trace viewer / replay UI (M4)
-- EvalForge suites (M5)
-- Postgres / Redis / Docker Compose
-- Authenticated LAN pairing token for phone access
+## Traces and replay (M4)
+
+| Method | Path | Meaning |
+|--------|------|---------|
+| GET | `/v1/traces/{run_id}` | List persisted spans for a run |
+| GET | `/v1/runs/{run_id}/replay` | Reconstruct checkpoints/spans/artifacts |
+
+## Sandbox (M4)
+
+| Method | Path | Meaning |
+|--------|------|---------|
+| POST | `/v1/sandbox/execute` | Run bounded Python (shell opt-in) |
+
+## Memory and settings
+
+| Method | Path | Meaning |
+|--------|------|---------|
+| GET/POST | `/v1/memory/*` | list/search/remember/forget |
+| GET/PATCH | `/v1/settings` | Non-secret operator toggles |
+
+## Evals and signature demo (M5)
+
+| Method | Path | Meaning |
+|--------|------|---------|
+| POST | `/v1/evals/run?suite=platform` | Run versioned eval suite |
+| POST | `/v1/demo/signature` | Synthetic signature demo; stops for approval |
+
+## Auth and rate limits
+
+- When `ATTICUS_API_TOKEN` is set, `/v1/*` requires `X-Atticus-Api-Token`.
+- `api.rate_limit_per_minute` applies a fixed-window limiter (0 disables).
+
+## Still incremental
+
+- Broader gateway handlers (gmail/calendar/git publish)
+- Authenticated LAN pairing for phone access
+- Postgres as default store (Compose service available; SQLite default)

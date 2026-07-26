@@ -15,21 +15,21 @@ Atticus is intentionally built as a serious personal software project: privacy-c
 - Optional TTS, local PTT/wake (Vosk), opt-in file/git/GitHub/Gmail/Calendar/browse tools
 - Read-only Textual status desk, Windows tray, and confirmation-gated autostart
 
-Package version `1.0.0` labels this Track A milestone. A full GUI chat remains unfinished.
+Package version `1.0.0` labels the Track A personal-assistant packaging milestone.
+The local retro `/ui` now covers GUI chat, approvals, settings, traces, and the
+signature demo; a fuller native desktop chat shell remains optional polish.
 
-**Track B — portfolio agent platform (in progress / planned):**
+**Track B — portfolio agent platform (M0–M5 vertical slices shipped locally):**
 
-- **M0–M3 slices started:** local FastAPI health + bounded runs + citations +
-  retro UI + deterministic policy/token-gated approvals (`pip install -e
-  ".[api]"`, `atticus-api`, open `/ui/`) — see ADR-010–013,
-  [`docs/API.md`](docs/API.md), [`docs/TERMINAL_UI.md`](docs/TERMINAL_UI.md)
-- Approved tool dispatch, traces/evals, Postgres still planned per [`SPEC.md`](SPEC.md)
-- Engineering bar in [`docs/SHARED_ENGINEERING_STANDARD.md`](docs/SHARED_ENGINEERING_STANDARD.md)
-- Honest capability map in [`docs/PORTFOLIO_ALIGNMENT.md`](docs/PORTFOLIO_ALIGNMENT.md)
+- Health, bounded runs, citations, policy/approvals, idempotent dispatch
+- Traces/replay, sandbox, memory controls, evals, routing fallback, signature demo
+- Docker Compose + Next.js `web/` + OTel-shaped exporter + Azure Terraform sketches
+- See ADR-010–018, [`docs/API.md`](docs/API.md), [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md),
+  [`docs/PORTFOLIO_ALIGNMENT.md`](docs/PORTFOLIO_ALIGNMENT.md)
 
-Do not present Postgres, Next.js, sandboxes, OTel exporters, tool dispatch,
-or M4–M5 as already complete. M0–M3 are vertical slices, not the full
-shared-standard bar.
+Honest limits: SQLite remains the default store (Postgres/Redis optional in
+Compose); OTel exporter is file/stderr JSON (not a full collector pipeline);
+Azure Terraform is a sketch, not a live shared environment.
 
 ## North star
 
@@ -194,6 +194,8 @@ CRT/phosphor terminal UI details: [`docs/TERMINAL_UI.md`](docs/TERMINAL_UI.md). 
 12. **Done (M2 slice + retro UI):** `atticus.citation.v1` provenance, `/v1/citations`, phosphor terminal at `/ui/`.
 13. **Done (M3 slice):** deterministic policy decisions, exact action digests,
     token-gated approval decisions, expiry, execution result records, audit.
-14. **Next good step:** M3 idempotent approved tool dispatch, then M4 trace/replay.
+14. **Done (M3 dispatch):** idempotent `POST /v1/approvals/{id}/execute` gateway
+    (`local_echo`, `file_write`) with `Idempotency-Key` replay.
+15. **Next good step:** Track B **M4** — trace spans / replay (or more gateway handlers).
 
 Do not add real keys to `.env.example`. Keep `.env` and `config/atticus.yaml` out of git if they contain secrets or machine-specific paths.
